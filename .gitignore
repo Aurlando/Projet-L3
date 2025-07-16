@@ -37,3 +37,4 @@ yarn-error.*
 
 # Dossier misy sary
 assets/ 
+.env
