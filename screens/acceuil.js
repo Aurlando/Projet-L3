@@ -42,7 +42,7 @@ const Accueil = ({navigation}) => {
             </View>
             
             <Text style={{color:'white', alignSelf: 'flex-start', marginLeft: 40, fontSize: 20, marginBottom: 20}}>Suggestions</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('lecons')} style={style.button}><Text style={style.text}>Faire une leçon</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('lecon')} style={style.button}><Text style={style.text}>Faire une leçon</Text></TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('decouverte')} style={style.button}><Text style={style.text}>Decouvrir Madagascar</Text></TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('traduction')} style={style.button}><Text style={style.text}>Faire une traduction</Text></TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('chatbot')} style={style.button}><Text style={style.text}>Aller au Cahtbot</Text></TouchableOpacity>
