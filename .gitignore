@@ -35,6 +35,5 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-# Dossier misy sary
-assets/ 
+
 .env
