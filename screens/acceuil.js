@@ -1,9 +1,12 @@
-import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View, Image, ScrollView } from "react-native";
+import React, { useState, useEffect } from "react";
+import { StyleSheet, Text, TouchableOpacity, View, Image, ScrollView, Alert } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import BottomNavigation from '../components/BottomNavigation';
 import MenuHamburger from '../components/MenuHamburger';
 import { useTheme } from '../hooks/useTheme';
+import { signOut } from 'firebase/auth';
+import { auth, db } from './locales/firebase';
+import { getDoc, doc } from 'firebase/firestore';
 
 // Données simulées pour l'utilisateur
 const USER_STATS = {
@@ -15,11 +18,44 @@ const USER_STATS = {
 const Accueil = ({ navigation }) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            setUserName(data.name || '');
+            setUserEmail(data.email || '');
+          } else {
+            setUserName(user.displayName || '');
+            setUserEmail(user.email || '');
+          }
+        } catch (e) {
+          setUserName(user.displayName || '');
+          setUserEmail(user.email || '');
+        }
+      }
+    };
+    if (menuVisible) fetchUserData();
+  }, [menuVisible]);
 
   // Calcul du temps d'étude formaté
-  const hours = Math.floor(USER_STATS.studyTime / 60);
-  const minutes = USER_STATS.studyTime % 60;
-  const formattedTime = `${hours > 0 ? hours + 'h' : ''}${minutes > 0 ? minutes + 'min' : ''}`;
+  let lessonsCompleted = USER_STATS.lessonsCompleted;
+  let totalLessons = USER_STATS.totalLessons;
+  let studyTime = USER_STATS.studyTime;
+  if (!auth.currentUser) {
+    lessonsCompleted = 0;
+    totalLessons = 0;
+    studyTime = 0;
+  }
+  const hours = Math.floor(studyTime / 60);
+  const minutes = studyTime % 60;
+  const formattedTime = `${hours}h${minutes}min`;
 
   // Détermine la couleur des grands titres selon le thème
   const titleColor = theme === 'dark' ? '#fff' : '#222';
@@ -51,7 +87,7 @@ const Accueil = ({ navigation }) => {
         <View style={styles.statsRow}>
           <View style={styles.statsBox}>
             <Text style={styles.statsLabel}>Leçons réussies</Text>
-            <Text style={styles.statsValue}>{USER_STATS.lessonsCompleted} / {USER_STATS.totalLessons}</Text>
+            <Text style={styles.statsValue}>{lessonsCompleted} / {totalLessons}</Text>
           </View>
           <View style={styles.statsBox}>
             <Text style={styles.statsLabel}>Temps d'étude</Text>
@@ -59,12 +95,12 @@ const Accueil = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Progrès en malgache + espace pour courbe */}
-        <Text style={[styles.sectionLabel, { color: sectionLabelColor }]}>Progrès en malgache</Text>
+        {/* Progrès en Malagasy + espace pour courbe */}
+        <Text style={[styles.sectionLabel, { color: sectionLabelColor }]}>Progrès en Malagasy</Text>
         <View style={styles.progressBarContainer}>
           {/* Barre de progression fictive */}
           <View style={styles.progressBarBg}>
-            <View style={[styles.progressBarFill, { width: `${USER_STATS.lessonsCompleted / USER_STATS.totalLessons * 100}%` }]} />
+            <View style={[styles.progressBarFill, { width: `${totalLessons > 0 ? (lessonsCompleted / totalLessons * 100) : 0}%` }]} />
           </View>
           {/* Espace réservé pour une future courbe de progression */}
           <View style={styles.curvePlaceholder}>
@@ -85,8 +121,20 @@ const Accueil = ({ navigation }) => {
         <Text style={[styles.sectionLabel, { color: sectionLabelColor }]}>Suggestions</Text>
         <TouchableOpacity onPress={() => navigation.navigate('lecon')} style={styles.button}><Text style={styles.buttonText}>Commencer une leçon</Text></TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('decouverte')} style={styles.button}><Text style={styles.buttonText}>Découvrir Madagascar</Text></TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('traduction')} style={styles.button}><Text style={styles.buttonText}>Faire une traduction</Text></TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('chatbot')} style={styles.button}><Text style={styles.buttonText}>Aller au Chatbot</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => {
+          if (!auth.currentUser) {
+            Alert.alert('Connexion requise', 'Veuillez vous connecter pour accéder à cette fonctionnalité.');
+            return;
+          }
+          navigation.navigate('traduction');
+        }} style={styles.button}><Text style={styles.buttonText}>Faire une traduction</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => {
+          if (!auth.currentUser) {
+            Alert.alert('Connexion requise', 'Veuillez vous connecter pour accéder à cette fonctionnalité.');
+            return;
+          }
+          navigation.navigate('chatbot');
+        }} style={styles.button}><Text style={styles.buttonText}>Aller au Chatbot</Text></TouchableOpacity>
       </ScrollView>
 
       {/* Menu Hamburger */}
@@ -98,6 +146,17 @@ const Accueil = ({ navigation }) => {
         theme={theme}
         toggleTheme={toggleTheme}
         onAbout={() => { setMenuVisible(false); navigation.navigate('about'); }}
+        onLogout={async () => {
+          setMenuVisible(false);
+          try {
+            await signOut(auth);
+            navigation.reset({ index: 0, routes: [{ name: 'home' }] });
+          } catch (e) {
+            alert('Erreur lors de la déconnexion : ' + e.message);
+          }
+        }}
+        userName={userName}
+        userEmail={userEmail}
       />
       {/* Navigation Fixe */}
       <BottomNavigation navigation={navigation} currentScreen="accueil" />

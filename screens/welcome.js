@@ -45,7 +45,7 @@ const Welcome = ({ navigation }) => {
       key: '2',
       image: require('./../assets/translate-img.png'), // Adjust path
       title: 'Handika avy hatrany',
-      description: 'Traduisez entre le malgache, le français et l\'anglais avec notre traducteur intégré.',
+      description: 'Traduisez entre le malagasy, le français et l\'anglais avec notre traducteur intégré.',
     },
     {
       key: '3',

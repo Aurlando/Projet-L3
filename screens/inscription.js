@@ -23,7 +23,7 @@ export default function Inscription({ navigation }) {
         password
       });
       alert('Inscription réussie ✅');
-      navigation.navigate('connexion');
+      navigation.navigate('home');
     } catch (error) {
       alert("Erreur : " + error.message);
     }

@@ -61,7 +61,7 @@ const LessonDetail = ({ navigation, route }) => {
           {
             question: 'Comment dit-on "Bonjour" en malgache ?',
             options: ['Salama', 'Tongasoa', 'Veloma', 'Misaotra'],
-            correct: 1,
+            correct: 0,
           },
           {
             question: 'Que signifie "Veloma" ?',
