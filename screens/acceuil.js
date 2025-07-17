@@ -21,6 +21,10 @@ const Accueil = ({ navigation }) => {
   const minutes = USER_STATS.studyTime % 60;
   const formattedTime = `${hours > 0 ? hours + 'h' : ''}${minutes > 0 ? minutes + 'min' : ''}`;
 
+  // Détermine la couleur des grands titres selon le thème
+  const titleColor = theme === 'dark' ? '#fff' : '#222';
+  const sectionLabelColor = theme === 'dark' ? '#fff' : '#222';
+
   return (
     <View style={[styles.container, { backgroundColor: theme === 'dark' ? '#000' : '#fff' }]}>  
       {/* Header principal */}
@@ -28,7 +32,7 @@ const Accueil = ({ navigation }) => {
         <TouchableOpacity onPress={() => setMenuVisible(true)}>
           <Ionicons name="menu" color={theme === 'dark' ? '#fff' : '#000'} size={32} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: '#fff' }]}>Hiteny</Text>
+        <Text style={[styles.title, { color: titleColor }]}>Hiteny</Text>
         <Ionicons name="help-circle-outline" size={28} color={theme === 'dark' ? '#fff' : '#000'} />
       </View>
 
@@ -43,7 +47,7 @@ const Accueil = ({ navigation }) => {
         </View>
 
         {/* Statistiques dynamiques */}
-        <Text style={styles.sectionLabel}>Statistiques</Text>
+        <Text style={[styles.sectionLabel, { color: sectionLabelColor }]}>Statistiques</Text>
         <View style={styles.statsRow}>
           <View style={styles.statsBox}>
             <Text style={styles.statsLabel}>Leçons réussies</Text>
@@ -56,7 +60,7 @@ const Accueil = ({ navigation }) => {
         </View>
 
         {/* Progrès en malgache + espace pour courbe */}
-        <Text style={styles.sectionLabel}>Progrès en malgache</Text>
+        <Text style={[styles.sectionLabel, { color: sectionLabelColor }]}>Progrès en malgache</Text>
         <View style={styles.progressBarContainer}>
           {/* Barre de progression fictive */}
           <View style={styles.progressBarBg}>
@@ -78,7 +82,7 @@ const Accueil = ({ navigation }) => {
         </View>
 
         {/* Suggestions */}
-        <Text style={styles.sectionLabel}>Suggestions</Text>
+        <Text style={[styles.sectionLabel, { color: sectionLabelColor }]}>Suggestions</Text>
         <TouchableOpacity onPress={() => navigation.navigate('lecon')} style={styles.button}><Text style={styles.buttonText}>Commencer une leçon</Text></TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('decouverte')} style={styles.button}><Text style={styles.buttonText}>Découvrir Madagascar</Text></TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('traduction')} style={styles.button}><Text style={styles.buttonText}>Faire une traduction</Text></TouchableOpacity>

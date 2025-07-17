@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../hooks/useTheme';
 
-export default function TraductionScreen() {
+export default function TraductionScreen({ navigation }) {
   const [texte, setTexte] = useState('');
   const [traduction, setTraduction] = useState('');
+  const { theme } = useTheme();
+  const titleColor = theme === 'dark' ? '#fff' : '#222';
+  const bgColor = theme === 'dark' ? '#11120F' : '#fff';
 
   const traduireTexte = async () => {
     if (!texte) return;
-
     try {
       const response = await fetch(
         `https://translate.googleapis.com/translate_a/single?client=gtx&sl=fr&tl=mg&dt=t&q=${encodeURIComponent(texte)}`
@@ -21,9 +25,15 @@ export default function TraductionScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.titre}>Traduction FR ➜ MG</Text>
-      
+    <View style={[styles.container, { backgroundColor: bgColor }]}>  
+      {/* Header avec flèche de retour */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color={titleColor} />
+        </TouchableOpacity>
+        <Text style={[styles.titre, { color: titleColor }]}>Traduction FR ➜ MG</Text>
+        <View style={{ width: 40 }} />
+      </View>
       <TextInput
         style={styles.input}
         placeholder="Entrez le texte en français"
@@ -31,12 +41,10 @@ export default function TraductionScreen() {
         value={texte}
         onChangeText={setTexte}
       />
-      
       <TouchableOpacity style={styles.bouton} onPress={traduireTexte}>
         <Text style={styles.boutonTexte}>Traduire</Text>
       </TouchableOpacity>
-
-      <Text style={styles.label}>Traduction malagasy</Text>
+      <Text style={[styles.label, { color: titleColor }]}>Traduction malagasy</Text>
       <Text style={styles.resultat}>{traduction}</Text>
     </View>
   );
@@ -49,11 +57,25 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'flex-start',
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 40,
+    marginBottom: 10,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#333',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   titre: {
     fontSize: 24,
     color: 'white',
     textAlign: 'center',
-    marginVertical: 20,
   },
   input: {
     backgroundColor: '#2C2E2B',

@@ -10,11 +10,17 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import BottomNavigation from '../components/BottomNavigation';
+import { useTheme } from '../hooks/useTheme';
 
 /**
  * Écran de détail d'une leçon avec contenu interactif et quiz question par question
  */
 const LessonDetail = ({ navigation, route }) => {
+  const { theme } = useTheme(); // Hook pour le thème global
+  const titleColor = theme === 'dark' ? '#fff' : '#222';
+  const sectionLabelColor = theme === 'dark' ? '#fff' : '#222';
+  const bgColor = theme === 'dark' ? '#000' : '#fff';
+
   // État pour suivre la progression de la leçon
   const [currentStep, setCurrentStep] = useState(0); // étape globale (intro, vocab, quiz, pratique)
   const [quizIndex, setQuizIndex] = useState(0); // index de la question courante du quiz
@@ -142,8 +148,8 @@ const LessonDetail = ({ navigation, route }) => {
         return (
           <View style={styles.stepContainer}>
             <Image source={step.image} style={styles.stepImage} />
-            <Text style={styles.stepTitle}>{step.title}</Text>
-            <Text style={styles.stepContent}>{step.content}</Text>
+            <Text style={[styles.stepTitle, { color: titleColor }]}>{step.title}</Text>
+            <Text style={[styles.stepContent, { color: sectionLabelColor }]}>{step.content}</Text>
             <TouchableOpacity style={styles.nextButton} onPress={nextStep}>
               <Text style={styles.nextButtonText}>Commencer la leçon</Text>
             </TouchableOpacity>
@@ -153,7 +159,7 @@ const LessonDetail = ({ navigation, route }) => {
       case 'vocabulary':
         return (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>{step.title}</Text>
+            <Text style={[styles.stepTitle, { color: titleColor }]}>{step.title}</Text>
             <ScrollView style={styles.vocabularyList}>
               {step.content.map((word, index) => (
                 <View key={index} style={styles.vocabularyItem}>
@@ -178,15 +184,19 @@ const LessonDetail = ({ navigation, route }) => {
         const question = step.questions[quizIndex];
         return (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>{step.title}</Text>
+            <Text style={[styles.stepTitle, { color: titleColor }]}>{step.title}</Text>
             <Text style={styles.quizProgress}>
               Question {quizIndex + 1} sur {step.questions.length}
             </Text>
-            <Text style={styles.questionText}>{question.question}</Text>
+            <Text style={[styles.questionText, { color: sectionLabelColor }]}>{question.question}</Text>
             {question.options.map((option, oIndex) => (
               <TouchableOpacity
                 key={oIndex}
-                style={[styles.optionButton, quizAnswered && oIndex === question.correct ? styles.correctOption : null, quizAnswered && oIndex !== question.correct && oIndex === question.selected ? styles.incorrectOption : null]}
+                style={[
+                  styles.optionButton,
+                  quizAnswered && oIndex === question.correct ? { backgroundColor: '#4CAF50', borderColor: '#4CAF50' } : null,
+                  quizAnswered && oIndex !== question.correct && oIndex === question.selected ? { backgroundColor: '#F44336', borderColor: '#F44336' } : null
+                ]}
                 onPress={() => handleQuizAnswer(oIndex)}
                 disabled={quizAnswered}
               >
@@ -194,7 +204,7 @@ const LessonDetail = ({ navigation, route }) => {
               </TouchableOpacity>
             ))}
             {quizAnswered && (
-              <Text style={lastAnswerCorrect ? styles.correctText : styles.incorrectText}>
+              <Text style={lastAnswerCorrect ? [styles.correctText, { color: '#4CAF50' }] : [styles.incorrectText, { color: '#F44336' }] }>
                 {lastAnswerCorrect ? 'Bonne réponse !' : `Mauvaise réponse. La bonne réponse était : ${question.options[question.correct]}`}
               </Text>
             )}
@@ -209,8 +219,8 @@ const LessonDetail = ({ navigation, route }) => {
       case 'practice':
         return (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>{step.title}</Text>
-            <Text style={styles.stepContent}>{step.content}</Text>
+            <Text style={[styles.stepTitle, { color: titleColor }]}>{step.title}</Text>
+            <Text style={[styles.stepContent, { color: sectionLabelColor }]}>{step.content}</Text>
             <TouchableOpacity style={styles.audioButton}>
               <Ionicons name="play-circle" size={60} color="#6CA94F" />
             </TouchableOpacity>
@@ -229,8 +239,8 @@ const LessonDetail = ({ navigation, route }) => {
   // Rendu des résultats finaux
   const renderResults = () => (
     <View style={styles.resultsContainer}>
-      <Text style={styles.resultsTitle}>Félicitations ! 🎉</Text>
-      <Text style={styles.resultsSubtitle}>Vous avez terminé la leçon</Text>
+      <Text style={[styles.resultsTitle, { color: titleColor }]}>Félicitations ! 🎉</Text>
+      <Text style={[styles.resultsSubtitle, { color: sectionLabelColor }]}>Vous avez terminé la leçon</Text>
       <View style={styles.scoreContainer}>
         <Text style={styles.scoreText}>Score : {score}/{lessonData.steps[2].questions.length}</Text>
         <Text style={styles.scorePercentage}>
@@ -252,18 +262,18 @@ const LessonDetail = ({ navigation, route }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: bgColor }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={titleColor} />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
-          <Text style={styles.headerTitle}>{lessonData.title}</Text>
-          <Text style={styles.headerSubtitle}>{lessonData.subtitle}</Text>
+          <Text style={[styles.headerTitle, { color: titleColor }]}>{lessonData.title}</Text>
+          <Text style={[styles.headerSubtitle, { color: sectionLabelColor }]}>{lessonData.subtitle}</Text>
         </View>
         <View style={styles.progressContainer}>
           <Text style={styles.progressText}>

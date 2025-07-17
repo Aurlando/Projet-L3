@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 import BottomNavigation from '../components/BottomNavigation';
+import { useTheme } from '../hooks/useTheme';
 
 /**
  * Écran de découverte de Madagascar
@@ -19,6 +20,9 @@ import BottomNavigation from '../components/BottomNavigation';
 const Decouverte = ({ navigation }) => {
   // État pour la barre de recherche
   const [searchText, setSearchText] = useState('');
+  const { theme } = useTheme();
+  const titleColor = theme === 'dark' ? '#fff' : '#222';
+  const sectionLabelColor = theme === 'dark' ? '#fff' : '#222';
 
   // Configuration des catégories de découverte
   const categories = [
@@ -127,24 +131,24 @@ const Decouverte = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme === 'dark' ? '#000' : '#fff' }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={titleColor} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Découvrir Madagascar</Text>
+        <Text style={[styles.headerTitle, { color: titleColor }]}>Découvrir Madagascar</Text>
         <TouchableOpacity style={styles.helpButton}>
-          <Ionicons name="help-circle-outline" size={24} color="#fff" />
+          <Ionicons name="help-circle-outline" size={24} color={titleColor} />
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Subtitle */}
-        <Text style={styles.subtitle}>Explorez la riche culture de Madagascar</Text>
+        <Text style={[styles.subtitle, { color: sectionLabelColor }]}>Explorez la riche culture de Madagascar</Text>
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
@@ -159,19 +163,19 @@ const Decouverte = ({ navigation }) => {
         </View>
 
         {/* Categories */}
-        <Text style={styles.sectionTitle}>Catégories</Text>
+        <Text style={[styles.sectionTitle, { color: sectionLabelColor }]}>Catégories</Text>
         <View style={styles.categoriesContainer}>
           {categories.map(renderCategoryCard)}
         </View>
 
         {/* Featured Content */}
-        <Text style={styles.sectionTitle}>Contenu en vedette</Text>
+        <Text style={[styles.sectionTitle, { color: sectionLabelColor }]}>Contenu en vedette</Text>
         <View style={styles.featuredContainer}>
           {featuredContent.map(renderFeaturedCard)}
         </View>
 
         {/* Quick Facts */}
-        <Text style={styles.sectionTitle}>Faits en bref</Text>
+        <Text style={[styles.sectionTitle, { color: sectionLabelColor }]}>Faits en bref</Text>
         <View style={styles.quickFactsContainer}>
           {quickFacts.map(renderQuickFact)}
         </View>
@@ -197,7 +201,7 @@ const Decouverte = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    // backgroundColor: '#000', // This line is commented out as per the edit hint
   },
   header: {
     flexDirection: 'row',
@@ -218,7 +222,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff',
+    // color: '#fff', // This line is commented out as per the edit hint
   },
   helpButton: {
     width: 40,
@@ -233,7 +237,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#999',
+    // color: '#999', // This line is commented out as per the edit hint
     textAlign: 'center',
     marginBottom: 20,
     paddingHorizontal: 20,
@@ -259,7 +263,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff',
+    // color: '#fff', // This line is commented out as per the edit hint
     marginBottom: 15,
     paddingHorizontal: 20,
   },

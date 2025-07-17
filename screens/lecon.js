@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { Clock, Lock, Play, Check, RotateCcw } from 'lucide-react-native';
 import BottomNavigation from '../components/BottomNavigation';
+import { useTheme } from '../hooks/useTheme';
 
 const lessons = [
   {
@@ -126,6 +127,10 @@ const getButtonConfig = (status) => {
 };
 
 const Lecon = ({ navigation }) => {
+  const { theme } = useTheme(); // Hook pour le thème global
+  const titleColor = theme === 'dark' ? '#fff' : '#222';
+  const sectionLabelColor = theme === 'dark' ? '#fff' : '#222';
+
   // Fonction pour gérer les actions des boutons de leçons
   const handleLessonAction = (lesson, action) => {
     switch (action) {
@@ -229,7 +234,7 @@ const Lecon = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme === 'dark' ? '#000' : '#fff' }]}>
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
@@ -237,7 +242,7 @@ const Lecon = ({ navigation }) => {
         >
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Leçons</Text>
+        <Text style={[styles.headerTitle, { color: titleColor }]}>Leçons</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -246,7 +251,7 @@ const Lecon = ({ navigation }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionTitle}>Parcours d'apprentissage</Text>
+        <Text style={[styles.sectionTitle, { color: sectionLabelColor }]}>Parcours d'apprentissage</Text>
         {lessons.map(renderLessonCard)}
         
         {/* Espace pour la navigation fixe */}
