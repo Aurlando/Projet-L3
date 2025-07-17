@@ -8,19 +8,20 @@ import {
   Image,
   Alert,
 } from 'react-native';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import BottomNavigation from '../components/BottomNavigation';
 
 /**
- * Écran de détail d'une leçon avec contenu interactif
- * @param {Object} navigation - Objet de navigation React Navigation
- * @param {Object} route - Objet route contenant les paramètres
+ * Écran de détail d'une leçon avec contenu interactif et quiz question par question
  */
 const LessonDetail = ({ navigation, route }) => {
   // État pour suivre la progression de la leçon
-  const [currentStep, setCurrentStep] = useState(0);
-  const [score, setScore] = useState(0);
-  const [showResults, setShowResults] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0); // étape globale (intro, vocab, quiz, pratique)
+  const [quizIndex, setQuizIndex] = useState(0); // index de la question courante du quiz
+  const [score, setScore] = useState(0); // score utilisateur
+  const [showResults, setShowResults] = useState(false); // affichage des résultats finaux
+  const [quizAnswered, setQuizAnswered] = useState(false); // pour bloquer le bouton après réponse
+  const [lastAnswerCorrect, setLastAnswerCorrect] = useState(null); // feedback immédiat
 
   // Données de la leçon "Salutations de base"
   const lessonData = {
@@ -78,38 +79,58 @@ const LessonDetail = ({ navigation, route }) => {
     ],
   };
 
-  // Fonction pour passer à l'étape suivante
+  // Passe à l'étape suivante (ou résultats si fin)
   const nextStep = () => {
-    if (currentStep < lessonData.steps.length - 1) {
+    // Si on est à l'étape quiz, on gère la navigation question par question
+    if (lessonData.steps[currentStep].type === 'quiz') {
+      if (quizIndex < lessonData.steps[2].questions.length - 1) {
+        setQuizIndex(quizIndex + 1);
+        setQuizAnswered(false);
+        setLastAnswerCorrect(null);
+      } else {
+        setCurrentStep(currentStep + 1); // passe à l'étape suivante (pratique ou résultats)
+        setQuizIndex(0);
+        setQuizAnswered(false);
+        setLastAnswerCorrect(null);
+      }
+    } else if (currentStep < lessonData.steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
       setShowResults(true);
     }
   };
 
-  // Fonction pour revenir à l'étape précédente
+  // Revenir à l'étape précédente
   const previousStep = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+      setQuizIndex(0);
+      setQuizAnswered(false);
+      setLastAnswerCorrect(null);
     }
   };
 
-  // Fonction pour gérer les réponses du quiz
-  const handleQuizAnswer = (questionIndex, selectedAnswer) => {
-    const question = lessonData.steps[2].questions[questionIndex];
+  // Gérer la réponse à une question du quiz
+  const handleQuizAnswer = (selectedAnswer) => {
+    if (quizAnswered) return; // Empêche de répondre plusieurs fois
+    const question = lessonData.steps[2].questions[quizIndex];
     if (selectedAnswer === question.correct) {
       setScore(score + 1);
-      Alert.alert('Correct !', 'Bonne réponse ! 🎉');
+      setLastAnswerCorrect(true);
     } else {
-      Alert.alert('Incorrect', `La bonne réponse était : ${question.options[question.correct]}`);
+      setLastAnswerCorrect(false);
     }
+    setQuizAnswered(true);
   };
 
-  // Fonction pour recommencer la leçon
+  // Recommencer la leçon
   const restartLesson = () => {
     setCurrentStep(0);
     setScore(0);
     setShowResults(false);
+    setQuizIndex(0);
+    setQuizAnswered(false);
+    setLastAnswerCorrect(null);
   };
 
   // Rendu de l'étape actuelle
@@ -153,34 +174,37 @@ const LessonDetail = ({ navigation, route }) => {
           </View>
         );
 
-      case 'quiz':
+      case 'quiz': {
+        const question = step.questions[quizIndex];
         return (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>{step.title}</Text>
             <Text style={styles.quizProgress}>
-              Question {currentStep - 1} sur {step.questions.length}
+              Question {quizIndex + 1} sur {step.questions.length}
             </Text>
-            <View style={styles.quizContainer}>
-              {step.questions.map((question, qIndex) => (
-                <View key={qIndex} style={styles.questionContainer}>
-                  <Text style={styles.questionText}>{question.question}</Text>
-                  {question.options.map((option, oIndex) => (
-                    <TouchableOpacity
-                      key={oIndex}
-                      style={styles.optionButton}
-                      onPress={() => handleQuizAnswer(qIndex, oIndex)}
-                    >
-                      <Text style={styles.optionText}>{option}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              ))}
-            </View>
-            <TouchableOpacity style={styles.nextButton} onPress={nextStep}>
-              <Text style={styles.nextButtonText}>Voir les résultats</Text>
+            <Text style={styles.questionText}>{question.question}</Text>
+            {question.options.map((option, oIndex) => (
+              <TouchableOpacity
+                key={oIndex}
+                style={[styles.optionButton, quizAnswered && oIndex === question.correct ? styles.correctOption : null, quizAnswered && oIndex !== question.correct && oIndex === question.selected ? styles.incorrectOption : null]}
+                onPress={() => handleQuizAnswer(oIndex)}
+                disabled={quizAnswered}
+              >
+                <Text style={styles.optionText}>{option}</Text>
+              </TouchableOpacity>
+            ))}
+            {quizAnswered && (
+              <Text style={lastAnswerCorrect ? styles.correctText : styles.incorrectText}>
+                {lastAnswerCorrect ? 'Bonne réponse !' : `Mauvaise réponse. La bonne réponse était : ${question.options[question.correct]}`}
+              </Text>
+            )}
+            <TouchableOpacity style={styles.nextButton} onPress={nextStep} disabled={!quizAnswered}>
+              <Text style={styles.nextButtonText}>{quizIndex === step.questions.length - 1 ? 'Voir les résultats' : 'Question suivante'}</Text>
             </TouchableOpacity>
+            <Text style={styles.scoreLive}>Score actuel : {score} / {step.questions.length}</Text>
           </View>
         );
+      }
 
       case 'practice':
         return (
@@ -202,19 +226,17 @@ const LessonDetail = ({ navigation, route }) => {
     }
   };
 
-  // Rendu des résultats
+  // Rendu des résultats finaux
   const renderResults = () => (
     <View style={styles.resultsContainer}>
       <Text style={styles.resultsTitle}>Félicitations ! 🎉</Text>
       <Text style={styles.resultsSubtitle}>Vous avez terminé la leçon</Text>
-      
       <View style={styles.scoreContainer}>
         <Text style={styles.scoreText}>Score : {score}/{lessonData.steps[2].questions.length}</Text>
         <Text style={styles.scorePercentage}>
           {Math.round((score / lessonData.steps[2].questions.length) * 100)}%
         </Text>
       </View>
-
       <View style={styles.resultsButtons}>
         <TouchableOpacity style={styles.restartButton} onPress={restartLesson}>
           <Text style={styles.restartButtonText}>Recommencer</Text>
@@ -249,7 +271,6 @@ const LessonDetail = ({ navigation, route }) => {
           </Text>
         </View>
       </View>
-
       {/* Barre de progression */}
       <View style={styles.progressBar}>
         <View 
@@ -259,12 +280,10 @@ const LessonDetail = ({ navigation, route }) => {
           ]} 
         />
       </View>
-
       {/* Contenu principal */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {showResults ? renderResults() : renderCurrentStep()}
       </ScrollView>
-
       {/* Navigation fixe */}
       <BottomNavigation navigation={navigation} currentScreen="lecon" />
     </View>
@@ -498,6 +517,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     fontWeight: 'bold',
+  },
+  correctOption: {
+    backgroundColor: '#4CAF50', // Green for correct
+    borderColor: '#4CAF50',
+  },
+  incorrectOption: {
+    backgroundColor: '#F44336', // Red for incorrect
+    borderColor: '#F44336',
+  },
+  correctText: {
+    color: '#4CAF50',
+    fontSize: 16,
+    marginTop: 10,
+    textAlign: 'center',
+  },
+  incorrectText: {
+    color: '#F44336',
+    fontSize: 16,
+    marginTop: 10,
+    textAlign: 'center',
+  },
+  scoreLive: {
+    fontSize: 16,
+    color: '#6CA94F',
+    fontWeight: 'bold',
+    marginTop: 20,
+    textAlign: 'center',
   },
 });
 

@@ -1,172 +1,252 @@
-import * as React from "react";
-import {StyleSheet, Text, TouchableOpacity, View, Image, ScrollView } from "react-native";
-import { MaterialIcons, FontAwesome5, Entypo, Ionicons, AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
+import React, { useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View, Image, ScrollView } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
 import BottomNavigation from '../components/BottomNavigation';
-// import MyAwesomeIcon from './../assets/madagascar.svg';
+import MenuHamburger from '../components/MenuHamburger';
+import { useTheme } from '../hooks/useTheme';
 
+// Données simulées pour l'utilisateur
+const USER_STATS = {
+  lessonsCompleted: 3, // À remplacer par la vraie logique utilisateur
+  totalLessons: 6,
+  studyTime: 75, // en minutes
+};
 
-const Accueil = ({navigation}) => {
-    return (
-        <View style={style.container}>
-            <ScrollView style={style.scrollView}>
-                <View style={style.contenaire}>
-            <View style={style.header}>    
-                <TouchableOpacity style={{left: -120}}><Ionicons name="menu" color={'white'} size={40}/></TouchableOpacity>
-                <Text style={style.textacceuil}>Hiteny</Text>
-                <Ionicons name="help-circle-outline" size={30} color={'#fff'} style={{left: 120}}/>
-            </View>
-            <View style={style.maki}>
-                <Image source={require('./../assets/auth-vector.png')} style={style.imageMaki}/>
-                <View style={style.textMaki}>
-                    <Text style={{color: 'white', fontSize: 20}}>Maki</Text>
-                    <Text style={{color: 'grey', fontSize: 16}}>Continuer votre apprentissage</Text>
-                </View>
-            </View>
-            <Text style={{color: '#fff', alignSelf: 'flex-start', marginLeft: 40, fontSize: 20}}>Progres</Text>
-            <View style={style.progres}>
-                <View style={style.contenairs}>
-                    <Text style={{color: 'grey'}}>Lecons terminees</Text>
-                    <Text style={{color: 'white'}}> 12</Text>
-                </View>
-                <View style={style.contenairs}>
-                    <Text style={{color: 'grey'}}>Temps d'etude</Text>
-                    <Text style={{color: 'white'}}>2h30min</Text>
-                </View>
-            </View>
-            <Text style={style.pm}>Progres en Malagasy</Text>
-            <View style={style.pem}>
+const Accueil = ({ navigation }) => {
+  const [menuVisible, setMenuVisible] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
-            </View>
-            <View>
-                <Image source={require('./../assets/stade-barea.jpg')} style={style.imageStade} />
-                <Text style={style.gasy}>Aza kivy, mbola misy andro mahery.</Text>
-                <Text style={style.farantsay}>Ne te decourage pas, il y a encore d'autres jours meilleurs.</Text>
-            </View>
-            
-            <Text style={{color:'white', alignSelf: 'flex-start', marginLeft: 40, fontSize: 20, marginBottom: 20}}>Suggestions</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('lecon')} style={style.button}><Text style={style.text}>Faire une leçon</Text></TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('decouverte')} style={style.button}><Text style={style.text}>Decouvrir Madagascar</Text></TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('traduction')} style={style.button}><Text style={style.text}>Faire une traduction</Text></TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('chatbot')} style={style.button}><Text style={style.text}>Aller au Chatbot</Text></TouchableOpacity>
-            <View style={style.navigation}>
-                <TouchableOpacity onPress={() => navigation.navigate('accueil')}><Ionicons name="home-sharp" size={40} color={"#fff"} style={{marginLeft: 20, marginRight: 20}}/><Text style={{color: 'white', marginLeft: 20}}>Acceuil</Text></TouchableOpacity>
-                <TouchableOpacity onPress={() => navigation.navigate('lecon')}><Ionicons name="book-outline" size={40} color={"#fff"} style={{marginLeft: 20, marginRight: 20}}/><Text style={{color:'white', marginLeft: 20}}>Leçons</Text></TouchableOpacity>
-                <TouchableOpacity onPress={() => navigation.navigate('traduction')}><MaterialIcons name="translate" size={40} color={"#fff"} style={{marginLeft: 20, marginRight: 20}}/><Text style={{color: 'white', marginLeft: 20}}>Traduction</Text></TouchableOpacity>
-                <TouchableOpacity onPress={() => navigation.navigate('chatbot')}><MaterialCommunityIcons name="robot-confused-outline" size={40} color={"#fff"} style={{marginLeft: 20, marginRight: 20}}/><Text style={{color: 'white', marginLeft: 20}}>ChatBot</Text></TouchableOpacity>
-                <TouchableOpacity onPress={() => navigation.navigate('decouverte')}><Entypo name="aircraft" size={40} color={"#fff"} style={{marginLeft: 20, marginRight: 20}}/><Text style={{color: 'white', marginLeft: 20}}>Decouvrir</Text></TouchableOpacity>
-            </View>
-            
-                </View>
-            </ScrollView>
+  // Calcul du temps d'étude formaté
+  const hours = Math.floor(USER_STATS.studyTime / 60);
+  const minutes = USER_STATS.studyTime % 60;
+  const formattedTime = `${hours > 0 ? hours + 'h' : ''}${minutes > 0 ? minutes + 'min' : ''}`;
 
-            {/* Navigation fixe en bas */}
-            <BottomNavigation navigation={navigation} currentScreen="accueil" />
+  return (
+    <View style={[styles.container, { backgroundColor: theme === 'dark' ? '#000' : '#fff' }]}>  
+      {/* Header principal */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => setMenuVisible(true)}>
+          <Ionicons name="menu" color={theme === 'dark' ? '#fff' : '#000'} size={32} />
+        </TouchableOpacity>
+        <Text style={[styles.title, { color: '#fff' }]}>Hiteny</Text>
+        <Ionicons name="help-circle-outline" size={28} color={theme === 'dark' ? '#fff' : '#000'} />
+      </View>
+
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {/* Section Maki */}
+        <View style={styles.makiSection}>
+          <Image source={require('./../assets/auth-vector.png')} style={styles.imageMaki} />
+          <View style={styles.textMaki}>
+            <Text style={{ color: theme === 'dark' ? '#fff' : '#222', fontSize: 20, fontWeight: 'bold' }}>Maki</Text>
+            <Text style={{ color: 'grey', fontSize: 16 }}>Continuez votre apprentissage</Text>
+          </View>
         </View>
-    );
-}
 
-const style = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#000"
-    },
-    scrollView: {
-        flex: 1,
-    },
-    contenaire: {
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 20,
-        marginTop: 20
-    },
-    textacceuil: {
-        fontSize: 25,
-        color: "#fff",
-    },
-    imageMaki: {
-        width: 80,
-        height: 100,
-        alignSelf: 'flex-start'
-    },
-    maki: {
-        flexDirection: 'row'
-    },
-    textMaki: {
-        marginLeft: 50,
-        justifyContent: 'center'
-    },
-    button: {
-        flexDirection: 'row',
-        alignItems: "center",
-        backgroundColor: "#282828",
-        borderRadius: 10,
-        marginBottom: 10,
-        width: 350,
-        height: 50,
-    },
-    text: {
-        color: "#fff",
-        flex: 1,
-        fontSize: 20,
-        textAlign: 'center'
-    },
-    navigation:{
-        backgroundColor: '#282828',
-        flexDirection: "row",
-        justifyContent: 'center',
-        borderRadius: 6,
-        marginTop: 20,
-        padding: 20,
-    },
-    progres: {
-        flexDirection: 'row',
-        marginBottom: 20,
-        marginTop: 20
-    },
-    contenairs: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#333333',
-        width: 150,
-        height: 100,
-        marginRight: 20,
-        borderRadius: 20,
-    },
-    pm: {
-        color: 'white',
-        alignSelf: 'flex-start',
-        marginLeft: 40,
-        fontSize: 20
-    },
-    pem: {
-        height: 200
-    },
-    imageStade: {
-        borderRadius: 20,
-        opacity: 0.5,
-        width: 350,
-        height: 200,
-        resizeMode: 'stretch'
-    },
-    gasy: {
-        position: 'relative',
-        color: '#fff',
-        textAlign: 'center',
-        fontSize: 20,
-        fontWeight: 'bold',
-        top: -60
-    },
-    farantsay: {
-        color: 'grey',
-        textAlign: 'center',
-        fontSize: 15,
-        top: -55
-    }
-})
+        {/* Statistiques dynamiques */}
+        <Text style={styles.sectionLabel}>Statistiques</Text>
+        <View style={styles.statsRow}>
+          <View style={styles.statsBox}>
+            <Text style={styles.statsLabel}>Leçons réussies</Text>
+            <Text style={styles.statsValue}>{USER_STATS.lessonsCompleted} / {USER_STATS.totalLessons}</Text>
+          </View>
+          <View style={styles.statsBox}>
+            <Text style={styles.statsLabel}>Temps d'étude</Text>
+            <Text style={styles.statsValue}>{formattedTime}</Text>
+          </View>
+        </View>
+
+        {/* Progrès en malgache + espace pour courbe */}
+        <Text style={styles.sectionLabel}>Progrès en malgache</Text>
+        <View style={styles.progressBarContainer}>
+          {/* Barre de progression fictive */}
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarFill, { width: `${USER_STATS.lessonsCompleted / USER_STATS.totalLessons * 100}%` }]} />
+          </View>
+          {/* Espace réservé pour une future courbe de progression */}
+          <View style={styles.curvePlaceholder}>
+            <Text style={styles.curveText}>[Courbe de progression à venir]</Text>
+          </View>
+        </View>
+
+        {/* Citation superposée sur l'image */}
+        <View style={styles.citationBox}>
+          <Image source={require('./../assets/stade-barea.jpg')} style={styles.imageStade} />
+          <View style={styles.citationOverlay}>
+            <Text style={styles.citationMalagasy}>Aza kivy, mbola misy andro mahery.</Text>
+            <Text style={styles.citationFr}>Ne te décourage pas, il y a encore d'autres jours meilleurs.</Text>
+          </View>
+        </View>
+
+        {/* Suggestions */}
+        <Text style={styles.sectionLabel}>Suggestions</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('lecon')} style={styles.button}><Text style={styles.buttonText}>Commencer une leçon</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('decouverte')} style={styles.button}><Text style={styles.buttonText}>Découvrir Madagascar</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('traduction')} style={styles.button}><Text style={styles.buttonText}>Faire une traduction</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('chatbot')} style={styles.button}><Text style={styles.buttonText}>Aller au Chatbot</Text></TouchableOpacity>
+      </ScrollView>
+
+      {/* Menu Hamburger */}
+      <MenuHamburger
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        onEditProfile={() => { setMenuVisible(false); navigation.navigate('editProfile'); }}
+        onChangePassword={() => { setMenuVisible(false); navigation.navigate('changePassword'); }}
+        theme={theme}
+        toggleTheme={toggleTheme}
+        onAbout={() => { setMenuVisible(false); navigation.navigate('about'); }}
+      />
+      {/* Navigation Fixe */}
+      <BottomNavigation navigation={navigation} currentScreen="accueil" />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 40,
+    paddingBottom: 10,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: 'bold',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 100,
+  },
+  makiSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  imageMaki: {
+    width: 80,
+    height: 100,
+    borderRadius: 12,
+  },
+  textMaki: {
+    marginLeft: 20,
+    flex: 1,
+  },
+  sectionLabel: {
+    color: '#fff', // Grands titres en blanc
+    fontWeight: 'bold',
+    fontSize: 18,
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  statsBox: {
+    backgroundColor: '#282828',
+    borderRadius: 10,
+    padding: 16,
+    width: '48%',
+    alignItems: 'center',
+  },
+  statsLabel: {
+    color: 'grey',
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  statsValue: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  progressBarContainer: {
+    marginBottom: 20,
+  },
+  progressBarBg: {
+    height: 10,
+    backgroundColor: '#333',
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#6CA94F',
+    borderRadius: 5,
+  },
+  curvePlaceholder: {
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 10,
+    backgroundColor: 'transparent',
+  },
+  curveText: {
+    color: 'grey',
+    fontStyle: 'italic',
+  },
+  citationBox: {
+    marginTop: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+    position: 'relative',
+  },
+  imageStade: {
+    borderRadius: 12,
+    opacity: 0.7,
+    width: '100%',
+    height: 120,
+    marginBottom: 0,
+    resizeMode: 'cover',
+  },
+  citationOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+  },
+  citationMalagasy: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 4,
+    textShadowColor: '#000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  citationFr: {
+    color: 'white',
+    fontSize: 15,
+    textAlign: 'center',
+    textShadowColor: '#000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  button: {
+    backgroundColor: '#282828',
+    borderRadius: 10,
+    marginBottom: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+});
 
 export default Accueil;

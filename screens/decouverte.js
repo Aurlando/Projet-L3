@@ -190,8 +190,8 @@ const Decouverte = ({ navigation }) => {
 
       {/* Navigation fixe en bas */}
       <BottomNavigation navigation={navigation} currentScreen="decouverte" />
-    </View>
-  );
+        </View>
+    );
 };
 
 const styles = StyleSheet.create({
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
-    flex: 1,
+        flex: 1,
   },
   categoryTag: {
     backgroundColor: '#6CA94F',

@@ -66,8 +66,8 @@ export default function Connexion({ navigation }) {
       </View>
 
       {/* Lien Mot de passe oublié */}
-      <TouchableOpacity style={{width: 115}}>
-        <Text style={styles.forgot}>Mot de passe oublié?</Text>
+      <TouchableOpacity style={{width: 150}} onPress={() => navigation.navigate('forgot')}>
+        <Text style={styles.forgot}>Mot de passe oublié ?</Text>
       </TouchableOpacity>
 
       <TouchableOpacity 
