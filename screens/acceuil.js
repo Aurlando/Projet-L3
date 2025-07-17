@@ -1,13 +1,15 @@
 import * as React from "react";
 import {StyleSheet, Text, TouchableOpacity, View, Image, ScrollView } from "react-native";
 import { MaterialIcons, FontAwesome5, Entypo, Ionicons, AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
-import MyAwesomeIcon from './../assets/madagascar.svg';
+import BottomNavigation from '../components/BottomNavigation';
+// import MyAwesomeIcon from './../assets/madagascar.svg';
 
 
 const Accueil = ({navigation}) => {
     return (
-        <ScrollView style={style.container}>
-            <View style={style.contenaire}>
+        <View style={style.container}>
+            <ScrollView style={style.scrollView}>
+                <View style={style.contenaire}>
             <View style={style.header}>    
                 <TouchableOpacity style={{left: -120}}><Ionicons name="menu" color={'white'} size={40}/></TouchableOpacity>
                 <Text style={style.textacceuil}>Hiteny</Text>
@@ -45,7 +47,7 @@ const Accueil = ({navigation}) => {
             <TouchableOpacity onPress={() => navigation.navigate('lecon')} style={style.button}><Text style={style.text}>Faire une leçon</Text></TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('decouverte')} style={style.button}><Text style={style.text}>Decouvrir Madagascar</Text></TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('traduction')} style={style.button}><Text style={style.text}>Faire une traduction</Text></TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('chatbot')} style={style.button}><Text style={style.text}>Aller au Cahtbot</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('chatbot')} style={style.button}><Text style={style.text}>Aller au Chatbot</Text></TouchableOpacity>
             <View style={style.navigation}>
                 <TouchableOpacity onPress={() => navigation.navigate('accueil')}><Ionicons name="home-sharp" size={40} color={"#fff"} style={{marginLeft: 20, marginRight: 20}}/><Text style={{color: 'white', marginLeft: 20}}>Acceuil</Text></TouchableOpacity>
                 <TouchableOpacity onPress={() => navigation.navigate('lecon')}><Ionicons name="book-outline" size={40} color={"#fff"} style={{marginLeft: 20, marginRight: 20}}/><Text style={{color:'white', marginLeft: 20}}>Leçons</Text></TouchableOpacity>
@@ -53,8 +55,13 @@ const Accueil = ({navigation}) => {
                 <TouchableOpacity onPress={() => navigation.navigate('chatbot')}><MaterialCommunityIcons name="robot-confused-outline" size={40} color={"#fff"} style={{marginLeft: 20, marginRight: 20}}/><Text style={{color: 'white', marginLeft: 20}}>ChatBot</Text></TouchableOpacity>
                 <TouchableOpacity onPress={() => navigation.navigate('decouverte')}><Entypo name="aircraft" size={40} color={"#fff"} style={{marginLeft: 20, marginRight: 20}}/><Text style={{color: 'white', marginLeft: 20}}>Decouvrir</Text></TouchableOpacity>
             </View>
-            </View>
-        </ScrollView>
+            
+                </View>
+            </ScrollView>
+
+            {/* Navigation fixe en bas */}
+            <BottomNavigation navigation={navigation} currentScreen="accueil" />
+        </View>
     );
 }
 
@@ -62,6 +69,9 @@ const style = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#000"
+    },
+    scrollView: {
+        flex: 1,
     },
     contenaire: {
         justifyContent: 'center',

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Clock, Lock, Play, Check, RotateCcw } from 'lucide-react-native';
+import BottomNavigation from '../components/BottomNavigation';
 
 const lessons = [
   {
@@ -125,6 +126,29 @@ const getButtonConfig = (status) => {
 };
 
 const Lecon = ({ navigation }) => {
+  // Fonction pour gérer les actions des boutons de leçons
+  const handleLessonAction = (lesson, action) => {
+    switch (action) {
+      case 'Commencer':
+        // Démarrer une nouvelle leçon
+        console.log(`Démarrage de la leçon: ${lesson.title}`);
+        navigation.navigate('lessonDetail', { lessonId: lesson.id });
+        break;
+      case 'Continuer':
+        // Continuer une leçon en cours
+        console.log(`Reprendre la leçon: ${lesson.title} (${lesson.progress}% terminé)`);
+        navigation.navigate('lessonDetail', { lessonId: lesson.id, progress: lesson.progress });
+        break;
+      case 'Réviser':
+        // Réviser une leçon terminée
+        console.log(`Révision de la leçon: ${lesson.title}`);
+        navigation.navigate('lessonDetail', { lessonId: lesson.id, mode: 'review' });
+        break;
+      default:
+        console.log(`Action non reconnue: ${action} pour la leçon ${lesson.id}`);
+    }
+  };
+
   const renderLessonCard = (lesson) => {
     const buttonConfig = getButtonConfig(lesson.status);
     const ButtonIcon = buttonConfig.icon;
@@ -193,7 +217,7 @@ const Lecon = ({ navigation }) => {
           disabled={buttonConfig.disabled}
           onPress={() => {
             if (!buttonConfig.disabled) {
-              console.log(`Action: ${buttonConfig.text} pour la leçon ${lesson.id}`);
+              handleLessonAction(lesson, buttonConfig.text);
             }
           }}
         >
@@ -224,7 +248,13 @@ const Lecon = ({ navigation }) => {
       >
         <Text style={styles.sectionTitle}>Parcours d'apprentissage</Text>
         {lessons.map(renderLessonCard)}
+        
+        {/* Espace pour la navigation fixe */}
+        <View style={styles.navigationSpacer} />
       </ScrollView>
+
+      {/* Navigation fixe en bas */}
+      <BottomNavigation navigation={navigation} currentScreen="lecon" />
     </View>
   );
 };
@@ -396,6 +426,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  navigationSpacer: {
+    height: 80, // Espace pour la navigation fixe
   },
 });
 

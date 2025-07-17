@@ -119,7 +119,7 @@ export default function Inscription({ navigation }) {
 
       {/* Lien Connexion */}
       <Text style={styles.loginText}>
-        Vous avez déjà un compte ? <Text style={styles.loginLink}nPress={() => navigation.navigate('Connexion')} o>Connexion</Text>
+        Vous avez déjà un compte ? <Text style={styles.loginLink} onPress={() => navigation.navigate('connexion')}>Connexion</Text>
       </Text>
     </View>
   );

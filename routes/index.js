@@ -10,7 +10,8 @@ import Inscription from '../screens/inscription';
 import Welcome from '../screens/welcome';
 import Decouverte from '../screens/decouverte';
 import Lecon from '../screens/lecon';
-// import Chatbot from '../screens/chatbot';
+import LessonDetail from '../screens/lessonDetail';
+import Chatbot from '../screens/chatbot';
 
 
 const Routes = () => {
@@ -26,8 +27,9 @@ const Stack = createNativeStackNavigator();
           <Stack.Screen name="inscription" component={Inscription} options={{headerShown: false}}/>
           <Stack.Screen name="traduction" component={traduction} options={{headerShown: false}} />
           <Stack.Screen name="decouverte" component={Decouverte} options={{headerShown: false}} />
-          <Stack.Screen name="lecons" component={Lecon} options={{headerShown: false}} />
-          {/* <Stack.Screen name="chatbot" component={Chatbot} options={{headerShown: false}} /> */}
+          <Stack.Screen name="lecon" component={Lecon} options={{headerShown: false}} />
+          <Stack.Screen name="lessonDetail" component={LessonDetail} options={{headerShown: false}} />
+          <Stack.Screen name="chatbot" component={Chatbot} options={{headerShown: false}} />
         </Stack.Navigator>
       </NavigationContainer>
     </View>
