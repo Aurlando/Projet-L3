@@ -37,7 +37,7 @@ const Welcome = ({ navigation }) => {
   const slides = [
     {
       key: '1',
-      image: require('./../assets/hi-maki.png'), // Adjust path as per your project structure
+      image: require('./../assets/maki-ispm-removebg-preview.png'), // Adjust path as per your project structure
       title: 'Tongasoa eto amin\'i Hiteny!',
       description: 'Apprenez la langue Malagasy avec nos cours interactifs et notre aperçu culturel.',
     },
