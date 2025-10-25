@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { auth } from '../screens/locales/firebase';
 
 /**
  * Composant de navigation fixe en bas de l'écran
@@ -68,12 +69,18 @@ const BottomNavigation = ({ navigation, currentScreen = 'accueil' }) => {
     <View style={styles.container}>
       {navItems.map((item) => {
         const isActive = currentScreen === item.id;
-        
+        const isRestricted = item.id === 'traduction' || item.id === 'chatbot';
         return (
           <TouchableOpacity
             key={item.id}
             style={styles.navItem}
-            onPress={() => navigation.navigate(item.screen)}
+            onPress={() => {
+              if (isRestricted && !auth.currentUser) {
+                Alert.alert('Connexion requise', 'Veuillez vous connecter pour accéder à cette fonctionnalité.');
+                return;
+              }
+              navigation.navigate(item.screen);
+            }}
           >
             {renderIcon(item, isActive)}
             <Text style={[

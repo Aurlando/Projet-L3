@@ -23,13 +23,13 @@ const lessons = [
   },
   {
     id: 2,
-    title: 'Membres de la famille',
-    subtitle: 'Vocabulaire des relations familiales',
+    title: 'Prononciation en Malagasy',
+    subtitle: 'Apprenez à prononcer les mots en Malagasy',
     difficulty: 'Débutant',
     duration: '15 min',
     status: 'completed',
     progress: 100,
-    words: ['Ray', 'Reny', 'Rahalahy'],
+    words: ['Manao ahoana', 'Veloma', 'Salama'],
   },
   {
     id: 3,

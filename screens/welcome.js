@@ -37,7 +37,7 @@ const Welcome = ({ navigation }) => {
   const slides = [
     {
       key: '1',
-      image: require('./../assets/hi-maki.png'), // Adjust path as per your project structure
+      image: require('./../assets/maki-ispm-removebg-preview.png'), // Adjust path as per your project structure
       title: 'Tongasoa eto amin\'i Hiteny!',
       description: 'Apprenez la langue Malagasy avec nos cours interactifs et notre aperçu culturel.',
     },
@@ -45,7 +45,7 @@ const Welcome = ({ navigation }) => {
       key: '2',
       image: require('./../assets/translate-img.png'), // Adjust path
       title: 'Handika avy hatrany',
-      description: 'Traduisez entre le malgache, le français et l\'anglais avec notre traducteur intégré.',
+      description: 'Traduisez entre le malagasy, le français et l\'anglais avec notre traducteur intégré.',
     },
     {
       key: '3',

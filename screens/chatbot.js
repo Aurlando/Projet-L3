@@ -115,10 +115,10 @@ const Chatbot = ({ navigation }) => {
         </View>
         <View style={styles.introContent}>
           <Text style={styles.title}>Assistant IA</Text>
-          <Text style={styles.subtitle}>Pratiquez le malgache avec notre chatbot</Text>
+          <Text style={styles.subtitle}>Pratiquez le Malagasy avec notre chatbot</Text>
           <View style={styles.featureCard}>
             <Text style={styles.featureTitle}>Fonctionnalités</Text>
-            <Text style={styles.featureText}>• Conversations en malgache</Text>
+            <Text style={styles.featureText}>• Conversations en Malagasy</Text>
             <Text style={styles.featureText}>• Correction de grammaire</Text>
             <Text style={styles.featureText}>• Suggestions de vocabulaire</Text>
             <Text style={styles.featureText}>• Exercices interactifs</Text>

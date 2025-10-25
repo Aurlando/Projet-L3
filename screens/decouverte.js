@@ -47,7 +47,7 @@ const Decouverte = ({ navigation }) => {
       id: 2,
       title: "Hiragasy",
       subtitle: "Art traditionnel",
-      description: "Découvrez le mélange unique de musique, de danse et d'art oratoire dans la culture malgache.",
+      description: "Découvrez le mélange unique de musique, de danse et d'art oratoire dans la culture Malagasy.",
       readTime: "5 min de lecture",
       category: "Culture",
       image: require('./../assets/image/hiragasy.jpg'), // Vraie image du hiragasy
@@ -79,7 +79,7 @@ const Decouverte = ({ navigation }) => {
     },
     {
       id: 3,
-      title: "Langue malgache",
+      title: "Langue Malagasy",
       description: "Parlé par plus de 18 millions de personnes dans le monde",
       icon: "chat",
     },
@@ -91,8 +91,15 @@ const Decouverte = ({ navigation }) => {
     },
   ];
 
+  const handleCategoryPress = (category) => {
+    //if (category.title === 'Culture') {
+      navigation.navigate('culture');
+    //}
+    // You can add more navigation for other categories if needed
+  };
+
   const renderCategoryCard = (category) => (
-    <TouchableOpacity key={category.id} style={styles.categoryCard}>
+    <TouchableOpacity key={category.id} style={styles.categoryCard} onPress={() => handleCategoryPress(category)}>
       <View style={[styles.categoryIcon, { backgroundColor: category.color }]}>
         <Ionicons name={category.icon} size={24} color="#fff" />
       </View>
@@ -134,7 +141,7 @@ const Decouverte = ({ navigation }) => {
     <View style={[styles.container, { backgroundColor: theme === 'dark' ? '#000' : '#fff' }]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
@@ -184,7 +191,7 @@ const Decouverte = ({ navigation }) => {
         <TouchableOpacity style={styles.joinCommunityCard}>
           <Text style={styles.joinCommunityTitle}>Vous souhaitez en savoir plus ?</Text>
           <Text style={styles.joinCommunityText}>
-            Rejoignez notre communauté et découvrez les trésors cachés de la culture malgache
+            Rejoignez notre communauté et découvrez les trésors cachés de la culture Malagasy
           </Text>
         </TouchableOpacity>
 

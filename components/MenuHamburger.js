@@ -3,10 +3,16 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const MenuHamburger = ({ visible, onClose, onEditProfile, onChangePassword, theme, toggleTheme, onAbout }) => (
+const MenuHamburger = ({ visible, onClose, onEditProfile, onChangePassword, theme, toggleTheme, onAbout, onLogout, userName, userEmail }) => (
   <Modal visible={visible} transparent animationType="fade">
     <TouchableOpacity style={styles.overlay} onPress={onClose} activeOpacity={1}>
       <View style={styles.menu}>
+        {/* User info */}
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>{userName || 'Utilisateur'}</Text>
+          <Text style={styles.userEmail}>{userEmail || ''}</Text>
+        </View>
+        {/* Menu items */}
         <TouchableOpacity style={styles.item} onPress={onEditProfile}>
           <Text style={styles.text}>Modifier le profil</Text>
         </TouchableOpacity>
@@ -19,6 +25,9 @@ const MenuHamburger = ({ visible, onClose, onEditProfile, onChangePassword, them
         </View>
         <TouchableOpacity style={styles.item} onPress={onAbout}>
           <Text style={styles.text}>À propos</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.item} onPress={onLogout}>
+          <Text style={[styles.text, { color: '#F44336', fontWeight: 'bold' }]}>Se déconnecter</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
           <Ionicons name="close" size={24} color="#333" />
@@ -34,7 +43,10 @@ const styles = StyleSheet.create({
   item: { paddingVertical: 12 },
   itemRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12 },
   text: { fontSize: 16, color: '#222' },
-  closeBtn: { position: 'absolute', top: 10, right: 10 }
+  closeBtn: { position: 'absolute', top: 10, right: 10 },
+  userInfo: { marginBottom: 20 },
+  userName: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+  userEmail: { fontSize: 14, color: '#666', marginTop: 2 }
 });
 
 export default MenuHamburger;
