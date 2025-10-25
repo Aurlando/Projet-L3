@@ -17,7 +17,7 @@ import ChangePassword from '../screens/ChangePassword';
 import About from '../screens/About';
 import ForgotPassword from '../screens/ForgotPassword';
 import Culture from '../screens/Culture';
-
+import OnboardingStepper from '../screens/OnboardingStepper';
 
 const Routes = () => {
 const Stack = createNativeStackNavigator();
@@ -40,6 +40,7 @@ const Stack = createNativeStackNavigator();
           <Stack.Screen name="changePassword" component={ChangePassword} options={{headerShown: true, title: 'Changer mot de passe'}} />
           <Stack.Screen name="about" component={About} options={{headerShown: true, title: 'À propos'}} />
           <Stack.Screen name="culture" component={Culture} options={{headerShown: true, title: 'Culture malgache'}} />
+          <Stack.Screen name="OnboardingStepper" component={OnboardingStepper} />
         </Stack.Navigator>
       </NavigationContainer>
     </View>
