@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import Stepper from '../components/Stepper'; // ta barre de progression simple
+import Stepper from '../components/Stepper';
 import { useNavigation } from '@react-navigation/native';
+import { auth, db } from './locales/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 export default function OnboardingStepper() {
   const navigation = useNavigation();
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState({});
 
-  // Assure-toi d'avoir 3 images dans assets/maki : maki1.png, maki2.png, maki3.png
+  // Images mascotte selon le step
   const makiImages = [
     require("../assets/choixObjectif.png"),
     require("../assets/choixDuree.png"),
-     require("../assets/choixNiveau.png"),
+    require("../assets/choixNiveau.png"),
   ];
 
+  // Étapes
   const steps = [
     {
       title: 'Choisis ton objectif',
@@ -39,14 +42,52 @@ export default function OnboardingStepper() {
     setAnswers(prev => ({ ...prev, [currentStep]: opt }));
   };
 
-  const handleNext = () => {
-    if (!selectedOption) return; // sécurité
+  // 🔥 Fonction principale quand on clique sur "Suivant" / "Terminer"
+  const handleNext = async () => {
+    if (!selectedOption) return; // sécurité : aucune option choisie
+
     if (currentStep < steps.length - 1) {
       setCurrentStep(s => s + 1);
     } else {
-      // Ici : sauvegarde dans Firestore / AsyncStorage si tu veux
-      console.log('Onboarding answers:', answers);
-      navigation.navigate('accueil'); // ou 'Home' selon ta route
+      const user = auth.currentUser;
+
+      if (user) {
+        try {
+          // Calculer le nombre total de leçons selon l'objectif
+          const getTotalLessons = (objectif) => {
+            if (objectif === 'Voyage à Madagascar') return 20;
+            if (objectif === 'Apprendre pour le fun') return 15;
+            if (objectif === 'Études / Travail') return 30;
+            return 15; // Autre ou défaut
+          };
+
+          const totalLessons = getTotalLessons(answers[0]);
+
+          // Sauvegarder les réponses et initialiser la progression
+          await setDoc(doc(db, "users", user.uid), {
+            onboarding: {
+              objectif: answers[0],
+              duree: answers[1],
+              niveau: answers[2],
+              date: new Date().toISOString()
+            },
+            // Initialiser la progression
+            lessonsCompleted: 0,
+            totalLessons: totalLessons,
+            studyTime: 0, // en minutes
+            startDate: new Date().toISOString()
+          }, { merge: true }); // merge = ne pas écraser les autres infos utilisateur
+
+          console.log("✅ Réponses d'onboarding sauvegardées :", answers);
+          console.log("✅ Progression initialisée :", { lessonsCompleted: 0, totalLessons });
+        } catch (e) {
+          console.error("❌ Erreur lors de la sauvegarde onboarding:", e);
+        }
+      } else {
+        console.warn("⚠️ Utilisateur non connecté, aucune sauvegarde Firebase.");
+      }
+
+      navigation.navigate('accueil');
     }
   };
 
@@ -56,16 +97,16 @@ export default function OnboardingStepper() {
 
   return (
     <View style={styles.container}>
-      {/* barre de progression */}
+      {/* Barre de progression */}
       <Stepper currentStep={currentStep} totalSteps={steps.length} />
 
-      {/* Titre */}
+      {/* Titre principal */}
       <Text style={styles.title}>Hiteny</Text>
 
-      {/* Mascotte selon step */}
+      {/* Mascotte dynamique */}
       <Image source={makiImages[Math.min(currentStep, makiImages.length - 1)]} style={styles.mascot} />
 
-      {/* Contenu */}
+      {/* Contenu principal */}
       <View style={styles.content}>
         <Text style={styles.stepTitle}>{steps[currentStep].title}</Text>
         <Text style={styles.instruction}>{steps[currentStep].instruction}</Text>
@@ -79,13 +120,15 @@ export default function OnboardingStepper() {
               onPress={() => handleSelect(opt)}
               style={[styles.optionButton, isSelected && styles.optionSelected]}
             >
-              <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>{opt}</Text>
+              <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
+                {opt}
+              </Text>
             </TouchableOpacity>
           );
         })}
       </View>
 
-      {/* Footer : Back à gauche / Next à droite */}
+      {/* Boutons bas de page */}
       <View style={styles.footer}>
         <View style={styles.left}>
           {currentStep > 0 && (
@@ -102,7 +145,9 @@ export default function OnboardingStepper() {
             style={[styles.nextButton, !selectedOption && styles.nextButtonDisabled]}
             activeOpacity={0.9}
           >
-            <Text style={styles.nextText}>{currentStep === steps.length - 1 ? 'Terminer' : 'Suivant'}</Text>
+            <Text style={styles.nextText}>
+              {currentStep === steps.length - 1 ? 'Terminer' : 'Suivant'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -204,7 +249,3 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
-
-
-
-    
