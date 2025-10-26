@@ -1,440 +1,494 @@
-import React from 'react';
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
-import { Clock, Lock, Play, Check, RotateCcw } from 'lucide-react-native';
-import BottomNavigation from '../components/BottomNavigation';
-import { useTheme } from '../hooks/useTheme';
+    View,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    ScrollView,
+    Alert,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { lessonsData } from "../data/lessons/lessonsData";
+import { auth, db } from "./locales/firebase";
+import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
+import BottomNavigation from "../components/BottomNavigation";
 
-const lessons = [
-  {
-    id: 1,
-    title: 'Salutations de base',
-    subtitle: 'Apprenez à dire bonjour et au revoir',
-    difficulty: 'Débutant',
-    duration: '10 min',
-    status: 'completed',
-    progress: 100,
-    words: ['Tongasoa', 'Veloma', 'Misaotra'],
-  },
-  {
-    id: 2,
-    title: 'Prononciation en Malagasy',
-    subtitle: 'Apprenez à prononcer les mots en Malagasy',
-    difficulty: 'Débutant',
-    duration: '15 min',
-    status: 'completed',
-    progress: 100,
-    words: ['Manao ahoana', 'Veloma', 'Salama'],
-  },
-  {
-    id: 3,
-    title: 'Nombres 1-20',
-    subtitle: 'Compter de un à vingt',
-    difficulty: 'Débutant',
-    duration: '12 min',
-    status: 'in_progress',
-    progress: 60,
-    words: ['Iray', 'Roa', 'Telo'],
-  },
-  {
-    id: 4,
-    title: 'Verbes courants',
-    subtitle: 'Mots d\'action essentiels',
-    difficulty: 'Intermédiaire',
-    duration: '20 min',
-    status: 'available',
-    progress: 0,
-    words: ['Mandeha', 'Mihinana', 'Misotro'],
-  },
-  {
-    id: 5,
-    title: 'Nourriture et boissons',
-    subtitle: 'Vocabulaire des repas et boissons',
-    difficulty: 'Intermédiaire',
-    duration: '18 min',
-    status: 'locked',
-    progress: 0,
-    words: ['Vary', 'Hena', 'Rano'],
-  },
-  {
-    id: 6,
-    title: 'Couleurs et formes',
-    subtitle: 'Décrire les objets visuellement',
-    difficulty: 'Débutant',
-    duration: '14 min',
-    status: 'locked',
-    progress: 0,
-    words: ['Mena', 'Fotsy', 'Mainty'],
-  },
-];
-
-const getDifficultyColor = (difficulty) => {
-  switch (difficulty) {
-    case 'Débutant':
-      return '#4CAF50';
-    case 'Intermédiaire':
-      return '#FF9800';
-    case 'Avancé':
-      return '#F44336';
-    default:
-      return '#999';
-  }
+// Déterminer la difficulté d'une leçon basée sur son ID
+const getDifficulty = (lessonId) => {
+    if (lessonId <= 2) return { label: "Débutant", color: "#4CAF50" };
+    if (lessonId <= 5) return { label: "Intermédiaire", color: "#FF9800" };
+    return { label: "Avancé", color: "#F44336" };
 };
 
-const getButtonConfig = (status) => {
-  switch (status) {
-    case 'completed':
-      return {
-        text: 'Réviser',
-        color: '#2196F3',
-        icon: RotateCcw,
-        disabled: false,
-      };
-    case 'in_progress':
-      return {
-        text: 'Continuer',
-        color: '#4CAF50',
-        icon: Play,
-        disabled: false,
-      };
-    case 'available':
-      return {
-        text: 'Commencer',
-        color: '#4CAF50',
-        icon: Play,
-        disabled: false,
-      };
-    case 'locked':
-      return {
-        text: 'Verrouillé',
-        color: '#999',
-        icon: Lock,
-        disabled: true,
-      };
-    default:
-      return {
-        text: 'Commencer',
-        color: '#4CAF50',
-        icon: Play,
-        disabled: false,
-      };
-  }
-};
+export default function Lecon({ navigation, route }) {
+    const [userProgress, setUserProgress] = useState({
+        completedLessons: [],
+        unlockedLessons: [1],
+    });
+    const [isGuest, setIsGuest] = useState(true);
 
-const Lecon = ({ navigation }) => {
-  const { theme } = useTheme(); // Hook pour le thème global
-  const titleColor = theme === 'dark' ? '#fff' : '#222';
-  const sectionLabelColor = theme === 'dark' ? '#fff' : '#222';
+    // 🔄 Récupérer les infos utilisateur
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const user = auth.currentUser;
+            if (user) {
+                setIsGuest(false);
+                const userRef = doc(db, "users", user.uid);
+                const userDoc = await getDoc(userRef);
 
-  // Fonction pour gérer les actions des boutons de leçons
-  const handleLessonAction = (lesson, action) => {
-    switch (action) {
-      case 'Commencer':
-        // Démarrer une nouvelle leçon
-        console.log(`Démarrage de la leçon: ${lesson.title}`);
-        navigation.navigate('lessonDetail', { lessonId: lesson.id });
-        break;
-      case 'Continuer':
-        // Continuer une leçon en cours
-        console.log(`Reprendre la leçon: ${lesson.title} (${lesson.progress}% terminé)`);
-        navigation.navigate('lessonDetail', { lessonId: lesson.id, progress: lesson.progress });
-        break;
-      case 'Réviser':
-        // Réviser une leçon terminée
-        console.log(`Révision de la leçon: ${lesson.title}`);
-        navigation.navigate('lessonDetail', { lessonId: lesson.id, mode: 'review' });
-        break;
-      default:
-        console.log(`Action non reconnue: ${action} pour la leçon ${lesson.id}`);
-    }
-  };
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    setUserProgress({
+                        completedLessons: data.completedLessons || [],
+                        unlockedLessons: data.unlockedLessons || [1],
+                    });
+                } else {
+                    // Créer un nouveau document si inexistant
+                    await setDoc(userRef, {
+                        completedLessons: [],
+                        unlockedLessons: [1],
+                    });
+                }
+            } else {
+                setIsGuest(true);
+            }
+        };
 
-  const renderLessonCard = (lesson) => {
-    const buttonConfig = getButtonConfig(lesson.status);
-    const ButtonIcon = buttonConfig.icon;
+        fetchUserData();
+    }, []);
+
+    // 🔓 Débloquer une nouvelle leçon si une précédente a été terminée
+    useEffect(() => {
+        if (route.params?.completedLessonId && !isGuest) {
+            const completedId = route.params.completedLessonId;
+            const newUnlockedId = completedId + 1;
+
+            setUserProgress((prev) => {
+                const updated = {
+                    completedLessons: [
+                        ...new Set([...prev.completedLessons, completedId]),
+                    ],
+                    unlockedLessons: [
+                        ...new Set([...prev.unlockedLessons, newUnlockedId]),
+                    ],
+                };
+
+                // Sauvegarder dans Firestore
+                const user = auth.currentUser;
+                if (user) {
+                    updateDoc(doc(db, "users", user.uid), updated);
+                }
+
+                return updated;
+            });
+
+            Alert.alert("Bravo 🎉", "Tu as débloqué la leçon suivante !");
+        }
+    }, [route.params]);
+
+    // 🔹 Fonction pour ouvrir une leçon
+    const handleOpenLesson = (lesson) => {
+        if (isGuest) {
+            Alert.alert(
+                "Connexion requise",
+                "Connecte-toi pour suivre les leçons !"
+            );
+            return;
+        }
+
+        if (!userProgress.unlockedLessons.includes(lesson.id)) {
+            Alert.alert(
+                "Leçon bloquée 🔒",
+                "Termine la leçon précédente pour débloquer celle-ci !"
+            );
+            return;
+        }
+
+        navigation.navigate("lessonDetail", { lessonId: lesson.id });
+    };
+
+    // 🧠 Déterminer le statut d'une leçon
+    const getLessonStatus = (lessonId) => {
+        if (userProgress.completedLessons.includes(lessonId)) return "reviser";
+        if (userProgress.unlockedLessons.includes(lessonId)) return "en_cours";
+        return "bloque";
+    };
+
+    // Calculer la progression globale
+    const totalLessons = lessonsData.length;
+    const completedCount = userProgress.completedLessons.length;
+    const progressPercentage = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
     return (
-      <View key={lesson.id} style={[
-        styles.lessonCard,
-        lesson.status === 'locked' && styles.lockedCard
-      ]}>
-        <View style={styles.cardHeader}>
-          <View style={styles.lessonInfo}>
-            <Text style={styles.lessonTitle}>{lesson.title}</Text>
-            <Text style={styles.lessonSubtitle}>{lesson.subtitle}</Text>
+        <View style={styles.container}>
+            {/* Header */}
+            <View style={styles.header}>
+                <TouchableOpacity 
+                    onPress={() => navigation.goBack()} 
+                    style={styles.backButton}
+                >
+                    <Ionicons name="arrow-back" size={28} color="#fff" />
+                </TouchableOpacity>
+                <View style={styles.headerTitleContainer}>
+                    <Text style={styles.headerTitle}>Leçons</Text>
+                    <Text style={styles.headerSubtitle}>Apprenez le malagasy de manière interactive</Text>
+                </View>
+                <View style={styles.backButton} />
+            </View>
+
+            {/* Progress Widget */}
+            <View style={styles.progressWidget}>
+                <View style={styles.progressWidgetContent}>
+                    <View style={styles.progressWidgetHeader}>
+                        <Ionicons name="book" size={20} color="#fff" />
+                        <Text style={styles.progressWidgetTitle}>Votre progression</Text>
+                    </View>
+                    <View style={styles.progressBarWidget}>
+                        <View style={[styles.progressBarWidgetFill, { width: `${progressPercentage}%` }]} />
+                    </View>
+                    <Text style={styles.progressWidgetText}>
+                        {completedCount} leçon{completedCount > 1 ? 's' : ''} sur {totalLessons} complétée{completedCount > 1 ? 's' : ''} ({progressPercentage}%)
+                    </Text>
+                </View>
+            </View>
+
+            <ScrollView 
+                style={styles.scrollView}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+            >
+                {lessonsData.map((lesson) => {
+                    const status = getLessonStatus(lesson.id);
+                    const isCompleted = status === "reviser";
+                    const isUnlocked = status !== "bloque";
+                    const difficulty = getDifficulty(lesson.id);
+                    
+                    // Calculer le pourcentage de progression
+                    // Note: On pourrait sauvegarder la progression individuelle dans Firestore
+                    let progress = 0;
+                    if (isCompleted) {
+                        progress = 100;
+                    } else if (!isUnlocked) {
+                        progress = 0;
+                    }
+                    // Pour les leçons débloquées mais non complétées, progress = 0 par défaut
+
+                    return (
+                        <View key={lesson.id} style={styles.lessonCard}>
+                            {/* Header de la carte */}
+                            <View style={styles.cardHeader}>
+                                <View style={styles.cardHeaderLeft}>
+                                    <Text style={styles.lessonTitle}>{lesson.title}</Text>
+                                    {isCompleted && (
+                                        <Ionicons 
+                                            name="checkmark-circle" 
+                                            size={24} 
+                                            color="#4CAF50" 
+                                            style={styles.checkIcon}
+                                        />
+                                    )}
+                                </View>
+                            </View>
+
+                            {/* Description */}
+                            <Text style={styles.lessonSubtitle}>{lesson.subtitle}</Text>
+
+                            {/* Méta informations */}
+                            <View style={styles.metaContainer}>
+                                <View style={[styles.difficultyBadge, { backgroundColor: difficulty.color }]}>
+                                    <Text style={styles.difficultyText}>{difficulty.label}</Text>
+                                </View>
+                                <View style={styles.durationContainer}>
+                                    <Ionicons name="time-outline" size={16} color="#888" />
+                                    <Text style={styles.durationText}>{lesson.steps.length * 5} min</Text>
+                                </View>
+                            </View>
+
+                            {/* Mots clés */}
+                            <View style={styles.keywordsContainer}>
+                                <Text style={styles.keywordsLabel}>Mots clés :</Text>
+                                <View style={styles.keywordsRow}>
+                                    {lesson.steps[1]?.content?.slice(0, 3).map((word, idx) => (
+                                        <View key={idx} style={styles.keywordTag}>
+                                            <Text style={styles.keywordText}>{word.malagasy}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            </View>
+
+                            {/* Barre de progression - seulement si débloquée */}
+                            {isUnlocked && (
+                                <View style={styles.progressContainer}>
+                                    <View style={styles.progressBarBackground}>
+                                        <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
+                                    </View>
+                                    <Text style={styles.progressText}>{progress}% terminé</Text>
+                                </View>
+                            )}
+
+                            {/* Bouton d'action */}
+                            <TouchableOpacity
+                                style={[
+                                    styles.actionButton,
+                                    !isUnlocked && styles.actionButtonLocked,
+                                    isCompleted && styles.actionButtonReview
+                                ]}
+                                onPress={() => handleOpenLesson(lesson)}
+                                disabled={!isUnlocked}
+                            >
+                                {isUnlocked ? (
+                                    <>
+                                        <Ionicons 
+                                            name={isCompleted ? "refresh" : "play"} 
+                                            size={20} 
+                                            color="#fff" 
+                                            style={styles.actionIcon}
+                                        />
+                                        <Text style={styles.actionButtonText}>
+                                            {isCompleted ? "Réviser" : "Commencer"}
+                                        </Text>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Ionicons 
+                                            name="lock-closed" 
+                                            size={20} 
+                                            color="#888" 
+                                            style={styles.actionIcon}
+                                        />
+                                        <Text style={[styles.actionButtonText, styles.actionButtonTextLocked]}>
+                                            Verrouillé
+                                        </Text>
+                                    </>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    );
+                })}
+
+                {isGuest && (
+                    <View style={styles.guestBox}>
+                        <Text style={styles.guestText}>
+                            Connecte-toi pour débloquer les leçons et sauvegarder ta progression.
+                        </Text>
+                    </View>
+                )}
+            </ScrollView>
             
-            <View style={styles.lessonMeta}>
-              <View style={[
-                styles.difficultyBadge,
-                { backgroundColor: getDifficultyColor(lesson.difficulty) }
-              ]}>
-                <Text style={styles.difficultyText}>{lesson.difficulty}</Text>
-              </View>
-              
-              <View style={styles.durationContainer}>
-                <Clock size={14} color="#666" />
-                <Text style={styles.durationText}>{lesson.duration}</Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.statusIcon}>
-            {lesson.status === 'completed' && (
-              <Check size={28} color="#4CAF50" />
-            )}
-          </View>
+            <BottomNavigation navigation={navigation} currentScreen="lecon" />
         </View>
-
-        <View style={styles.wordsContainer}>
-          <Text style={styles.wordsLabel}>Mots clés :</Text>
-          <View style={styles.wordsPreview}>
-            {lesson.words.map((word, index) => (
-              <View key={index} style={styles.wordChip}>
-                <Text style={styles.wordText}>{word}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {lesson.progress > 0 && lesson.status !== 'locked' && (
-          <View style={styles.progressContainer}>
-            <View style={styles.progressBar}>
-              <View style={[
-                styles.progressFill,
-                { width: `${lesson.progress}%` }
-              ]} />
-            </View>
-            <Text style={styles.progressText}>{lesson.progress}% terminé</Text>
-          </View>
-        )}
-
-        <TouchableOpacity
-          style={[
-            styles.actionButton,
-            { backgroundColor: buttonConfig.color },
-            buttonConfig.disabled && styles.disabledButton
-          ]}
-          disabled={buttonConfig.disabled}
-          onPress={() => {
-            if (!buttonConfig.disabled) {
-              handleLessonAction(lesson, buttonConfig.text);
-            }
-          }}
-        >
-          <ButtonIcon size={20} color="#fff" />
-          <Text style={styles.buttonText}>{buttonConfig.text}</Text>
-        </TouchableOpacity>
-      </View>
     );
-  };
-
-  return (
-    <View style={[styles.container, { backgroundColor: theme === 'dark' ? '#000' : '#fff' }]}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: titleColor }]}>Leçons</Text>
-        <View style={styles.placeholder} />
-      </View>
-
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={[styles.sectionTitle, { color: sectionLabelColor }]}>Parcours d'apprentissage</Text>
-        {lessons.map(renderLessonCard)}
-        
-        {/* Espace pour la navigation fixe */}
-        <View style={styles.navigationSpacer} />
-      </ScrollView>
-
-      {/* Navigation fixe en bas */}
-      <BottomNavigation navigation={navigation} currentScreen="lecon" />
-    </View>
-  );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 20,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#333',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButtonText: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  placeholder: {
-    width: 40,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 20,
-  },
-  lessonCard: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  lockedCard: {
-    opacity: 0.6,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  lessonInfo: {
-    flex: 1,
-    paddingRight: 16,
-  },
-  lessonTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  lessonSubtitle: {
-    fontSize: 14,
-    color: '#999',
-    marginBottom: 12,
-  },
-  lessonMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  difficultyBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  difficultyText: {
-    fontSize: 12,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  durationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  durationText: {
-    fontSize: 12,
-    color: '#666',
-  },
-  statusIcon: {
-    marginLeft: 8,
-  },
-  wordsContainer: {
-    marginBottom: 16,
-  },
-  wordsLabel: {
-    fontSize: 14,
-    color: '#999',
-    marginBottom: 8,
-  },
-  wordsPreview: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  wordChip: {
-    backgroundColor: '#2a2a2a',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#444',
-  },
-  wordText: {
-    fontSize: 12,
-    color: '#6CA94F',
-    fontWeight: '500',
-  },
-  progressContainer: {
-    marginBottom: 16,
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: '#333',
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 6,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#4CAF50',
-    borderRadius: 3,
-  },
-  progressText: {
-    fontSize: 12,
-    color: '#999',
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    gap: 8,
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  navigationSpacer: {
-    height: 80, // Espace pour la navigation fixe
-  },
+    container: {
+        flex: 1,
+        backgroundColor: "#000",
+    },
+    header: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 20,
+        paddingTop: 60,
+        paddingBottom: 20,
+    },
+    backButton: {
+        width: 40,
+        height: 40,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    headerTitleContainer: {
+        flex: 1,
+        alignItems: "center",
+    },
+    headerTitle: {
+        fontSize: 24,
+        fontWeight: "bold",
+        color: "#fff",
+    },
+    headerSubtitle: {
+        fontSize: 12,
+        color: "#888",
+        marginTop: 4,
+    },
+    progressWidget: {
+        paddingHorizontal: 20,
+        marginBottom: 20,
+    },
+    progressWidgetContent: {
+        backgroundColor: "#1A1A1A",
+        borderRadius: 12,
+        padding: 16,
+    },
+    progressWidgetHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        marginBottom: 12,
+    },
+    progressWidgetTitle: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#fff",
+    },
+    progressBarWidget: {
+        height: 8,
+        backgroundColor: "#2A2A2A",
+        borderRadius: 4,
+        marginBottom: 8,
+        overflow: "hidden",
+    },
+    progressBarWidgetFill: {
+        height: "100%",
+        backgroundColor: "#4CAF50",
+        borderRadius: 4,
+    },
+    progressWidgetText: {
+        fontSize: 14,
+        color: "#ccc",
+    },
+    scrollView: {
+        flex: 1,
+    },
+    scrollContent: {
+        paddingHorizontal: 20,
+        paddingBottom: 100, // Espace pour la bottom navigation
+    },
+    lessonCard: {
+        backgroundColor: "#1A1A1A",
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 15,
+    },
+    cardHeader: {
+        marginBottom: 8,
+    },
+    cardHeaderLeft: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+    },
+    lessonTitle: {
+        color: "#fff",
+        fontWeight: "bold",
+        fontSize: 18,
+        flex: 1,
+    },
+    checkIcon: {
+        marginLeft: 8,
+    },
+    lessonSubtitle: {
+        color: "#888",
+        fontSize: 14,
+        marginBottom: 12,
+    },
+    metaContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        marginBottom: 12,
+    },
+    difficultyBadge: {
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 20,
+    },
+    difficultyText: {
+        color: "#fff",
+        fontSize: 12,
+        fontWeight: "600",
+    },
+    durationContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+    },
+    durationText: {
+        color: "#888",
+        fontSize: 14,
+    },
+    keywordsContainer: {
+        marginBottom: 12,
+    },
+    keywordsLabel: {
+        color: "#888",
+        fontSize: 14,
+        marginBottom: 6,
+    },
+    keywordsRow: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: 8,
+    },
+    keywordTag: {
+        borderWidth: 1,
+        borderColor: "#4CAF50",
+        borderRadius: 20,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        backgroundColor: "#1A1A1A",
+    },
+    keywordText: {
+        color: "#4CAF50",
+        fontSize: 12,
+    },
+    progressContainer: {
+        marginBottom: 16,
+    },
+    progressBarBackground: {
+        height: 6,
+        backgroundColor: "#2A2A2A",
+        borderRadius: 3,
+        marginBottom: 8,
+    },
+    progressBarFill: {
+        height: "100%",
+        backgroundColor: "#4CAF50",
+        borderRadius: 3,
+    },
+    progressText: {
+        color: "#fff",
+        fontSize: 14,
+    },
+    actionButton: {
+        backgroundColor: "#4CAF50",
+        borderRadius: 12,
+        paddingVertical: 14,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+    },
+    actionButtonReview: {
+        backgroundColor: "#007AFF",
+    },
+    actionButtonLocked: {
+        backgroundColor: "#2A2A2A",
+    },
+    actionIcon: {
+        marginRight: 4,
+    },
+    actionButtonText: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "bold",
+    },
+    actionButtonTextLocked: {
+        color: "#888",
+    },
+    guestBox: {
+        marginTop: 20,
+        backgroundColor: "#1A1A1A",
+        padding: 15,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: "#4CAF50",
+    },
+    guestText: {
+        color: "#fff",
+        textAlign: "center",
+        fontSize: 14,
+    },
 });
-
-export default Lecon;

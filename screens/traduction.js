@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
+import BottomNavigation from '../components/BottomNavigation';
 
 export default function TraductionScreen({ navigation }) {
   const [texte, setTexte] = useState('');
@@ -34,18 +35,27 @@ export default function TraductionScreen({ navigation }) {
         <Text style={[styles.titre, { color: titleColor }]}>Traduction FR ➜ MG</Text>
         <View style={{ width: 40 }} />
       </View>
-      <TextInput
-        style={styles.input}
-        placeholder="Entrez le texte en français"
-        placeholderTextColor="#888"
-        value={texte}
-        onChangeText={setTexte}
-      />
-      <TouchableOpacity style={styles.bouton} onPress={traduireTexte}>
-        <Text style={styles.boutonTexte}>Traduire</Text>
-      </TouchableOpacity>
-      <Text style={[styles.label, { color: titleColor }]}>Traduction malagasy</Text>
-      <Text style={styles.resultat}>{traduction}</Text>
+      
+      <ScrollView 
+        style={styles.scrollContent}
+        contentContainerStyle={styles.scrollContentInner}
+        showsVerticalScrollIndicator={false}
+      >
+        <TextInput
+          style={styles.input}
+          placeholder="Entrez le texte en français"
+          placeholderTextColor="#888"
+          value={texte}
+          onChangeText={setTexte}
+        />
+        <TouchableOpacity style={styles.bouton} onPress={traduireTexte}>
+          <Text style={styles.boutonTexte}>Traduire</Text>
+        </TouchableOpacity>
+        <Text style={[styles.label, { color: titleColor }]}>Traduction malagasy</Text>
+        <Text style={styles.resultat}>{traduction}</Text>
+      </ScrollView>
+      
+      <BottomNavigation navigation={navigation} currentScreen="traduction" />
     </View>
   );
 }
@@ -54,8 +64,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#11120F',
+  },
+  scrollContent: {
+    flex: 1,
     padding: 20,
-    justifyContent: 'flex-start',
+  },
+  scrollContentInner: {
+    paddingBottom: 80, // Espace pour la bottom navigation
   },
   header: {
     flexDirection: 'row',

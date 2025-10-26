@@ -1,301 +1,256 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  Alert,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import BottomNavigation from '../components/BottomNavigation';
-import { useTheme } from '../hooks/useTheme';
+import React, { useState } from "react";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, Alert } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { lessonsData } from "../data/lessons/lessonsData";
+import { auth, db } from "./locales/firebase";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 
-/**
- * Écran de détail d'une leçon avec contenu interactif et quiz question par question
- */
 const LessonDetail = ({ navigation, route }) => {
-  const { theme } = useTheme(); // Hook pour le thème global
-  const titleColor = theme === 'dark' ? '#fff' : '#222';
-  const sectionLabelColor = theme === 'dark' ? '#fff' : '#222';
-  const bgColor = theme === 'dark' ? '#000' : '#fff';
+  const { lessonId } = route.params;
+  const lessonData = lessonsData.find((lesson) => lesson.id === lessonId);
 
-  // État pour suivre la progression de la leçon
-  const [currentStep, setCurrentStep] = useState(0); // étape globale (intro, vocab, quiz, pratique)
-  const [quizIndex, setQuizIndex] = useState(0); // index de la question courante du quiz
-  const [score, setScore] = useState(0); // score utilisateur
-  const [showResults, setShowResults] = useState(false); // affichage des résultats finaux
-  const [quizAnswered, setQuizAnswered] = useState(false); // pour bloquer le bouton après réponse
-  const [lastAnswerCorrect, setLastAnswerCorrect] = useState(null); // feedback immédiat
+  const [currentStep, setCurrentStep] = useState(0);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [selectedAnswers, setSelectedAnswers] = useState([]);
+  const [showQuizResult, setShowQuizResult] = useState(false);
+  const [showFinalResults, setShowFinalResults] = useState(false);
+  const [hasAnswered, setHasAnswered] = useState(false);
 
-  // Données de la leçon "Salutations de base"
-  const lessonData = {
-    id: 1,
-    title: 'Salutations de base',
-    subtitle: 'Apprenez à dire bonjour et au revoir en malgache',
-    steps: [
-      {
-        id: 1,
-        type: 'introduction',
-        title: 'Bienvenue dans cette leçon !',
-        content: 'Dans cette leçon, vous allez apprendre les salutations de base en malgache. Prêt à commencer ?',
-        image: require('./../assets/image/auth-vector.png'),
-      },
-      {
-        id: 2,
-        type: 'vocabulary',
-        title: 'Salutations de base',
-        content: [
-          { malagasy: 'Tongasoa', french: 'Bonjour / Bienvenue', pronunciation: 'Tong-a-so-a' },
-          { malagasy: 'Salama', french: 'Salut', pronunciation: 'Sa-la-ma' },
-          { malagasy: 'Veloma', french: 'Au revoir', pronunciation: 'Ve-lo-ma' },
-          { malagasy: 'Misaotra', french: 'Merci', pronunciation: 'Mi-sao-tra' },
-        ],
-      },
-      {
-        id: 3,
-        type: 'quiz',
-        title: 'Testez vos connaissances',
-        questions: [
-          {
-            question: 'Comment dit-on "Bonjour" en malgache ?',
-            options: ['Salama', 'Tongasoa', 'Veloma', 'Misaotra'],
-            correct: 0,
-          },
-          {
-            question: 'Que signifie "Veloma" ?',
-            options: ['Bonjour', 'Merci', 'Au revoir', 'Salut'],
-            correct: 2,
-          },
-          {
-            question: 'Comment dit-on "Merci" en malgache ?',
-            options: ['Tongasoa', 'Salama', 'Misaotra', 'Veloma'],
-            correct: 2,
-          },
-        ],
-      },
-      {
-        id: 4,
-        type: 'practice',
-        title: 'Pratiquez les salutations',
-        content: 'Répétez après nous : Tongasoa, Salama, Veloma, Misaotra',
-        audioHint: 'Cliquez pour écouter la prononciation',
-      },
-    ],
-  };
+  if (!lessonData) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorText}>Leçon introuvable.</Text>
+      </View>
+    );
+  }
 
-  // Passe à l'étape suivante (ou résultats si fin)
-  const nextStep = () => {
-    // Si on est à l'étape quiz, on gère la navigation question par question
-    if (lessonData.steps[currentStep].type === 'quiz') {
-      if (quizIndex < lessonData.steps[2].questions.length - 1) {
-        setQuizIndex(quizIndex + 1);
-        setQuizAnswered(false);
-        setLastAnswerCorrect(null);
-      } else {
-        setCurrentStep(currentStep + 1); // passe à l'étape suivante (pratique ou résultats)
-        setQuizIndex(0);
-        setQuizAnswered(false);
-        setLastAnswerCorrect(null);
-      }
+  const step = lessonData.steps[currentStep];
+  const isQuizStep = step.type === "quiz";
+
+  const handleNext = () => {
+    if (isQuizStep && currentQuestion < step.questions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+      setShowQuizResult(false);
+      setHasAnswered(false);
+    } else if (isQuizStep && currentQuestion === step.questions.length - 1) {
+      // Dernière question du quiz
+      calculateFinalScore();
+      setShowFinalResults(true);
     } else if (currentStep < lessonData.steps.length - 1) {
       setCurrentStep(currentStep + 1);
+      setCurrentQuestion(0);
+      setShowQuizResult(false);
+      setHasAnswered(false);
     } else {
-      setShowResults(true);
+      setShowFinalResults(true);
     }
   };
 
-  // Revenir à l'étape précédente
-  const previousStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-      setQuizIndex(0);
-      setQuizAnswered(false);
-      setLastAnswerCorrect(null);
+  const handleAnswer = (answerIndex) => {
+    if (showQuizResult || hasAnswered) return; // Empêcher les réponses multiples
+    
+    const question = step.questions[currentQuestion];
+    const isCorrect = answerIndex === question.correct;
+    
+    setSelectedAnswers(prev => [...prev, { questionIndex: currentQuestion, answerIndex, isCorrect }]);
+    setShowQuizResult(true);
+    setHasAnswered(true);
+  };
+
+  const calculateFinalScore = () => {
+    const quizStep = lessonData.steps.find(s => s.type === "quiz");
+    if (quizStep) {
+      let totalScore = 0;
+      quizStep.questions.forEach((q, i) => {
+        const userAnswer = selectedAnswers.find(a => a.questionIndex === i);
+        if (userAnswer && userAnswer.isCorrect) {
+          totalScore++;
+        }
+      });
+      saveProgress(totalScore, quizStep.questions.length);
     }
   };
 
-  // Gérer la réponse à une question du quiz
-  const handleQuizAnswer = (selectedAnswer) => {
-    if (quizAnswered) return; // Empêche de répondre plusieurs fois
-    const question = lessonData.steps[2].questions[quizIndex];
-    if (selectedAnswer === question.correct) {
-      setScore(score + 1);
-      setLastAnswerCorrect(true);
-    } else {
-      setLastAnswerCorrect(false);
+  const saveProgress = async (correctAnswers, totalQuestions) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        const completedLessons = data.completedLessons || [];
+        const unlockedLessons = data.unlockedLessons || [1];
+        
+        // Marquer cette leçon comme complétée si le score est au moins 60%
+        if ((correctAnswers / totalQuestions) >= 0.6 && !completedLessons.includes(lessonId)) {
+          const newUnlockedId = lessonId + 1;
+          const updatedCompletedLessons = [...completedLessons, lessonId];
+          const updatedUnlockedLessons = [...new Set([...unlockedLessons, newUnlockedId])];
+          
+          await updateDoc(userRef, {
+            completedLessons: updatedCompletedLessons,
+            unlockedLessons: updatedUnlockedLessons,
+          });
+          
+          // Afficher l'alerte après un court délai pour que l'UI soit mise à jour
+          setTimeout(() => {
+            Alert.alert("Bravo 🎉", "Tu as complété cette leçon et débloqué la suivante !");
+          }, 500);
+        }
+      }
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde:", error);
     }
-    setQuizAnswered(true);
   };
 
-  // Recommencer la leçon
-  const restartLesson = () => {
-    setCurrentStep(0);
-    setScore(0);
-    setShowResults(false);
-    setQuizIndex(0);
-    setQuizAnswered(false);
-    setLastAnswerCorrect(null);
+  const handleFinishLesson = () => {
+    navigation.navigate("lecon", { completedLessonId: lessonId });
   };
 
-  // Rendu de l'étape actuelle
-  const renderCurrentStep = () => {
-    const step = lessonData.steps[currentStep];
+  const renderStep = () => {
+    if (step.type === "introduction") {
+      return (
+        <View style={styles.introContainer}>
+          <Image source={require("../assets/lemurien.png")} style={styles.lemurImage} />
+          <Text style={styles.introTitle}>{step.title}</Text>
+          <Text style={styles.introContent}>{step.content}</Text>
+        </View>
+      );
+    }
 
-    switch (step.type) {
-      case 'introduction':
-        return (
-          <View style={styles.stepContainer}>
-            <Image source={step.image} style={styles.stepImage} />
-            <Text style={[styles.stepTitle, { color: titleColor }]}>{step.title}</Text>
-            <Text style={[styles.stepContent, { color: sectionLabelColor }]}>{step.content}</Text>
-            <TouchableOpacity style={styles.nextButton} onPress={nextStep}>
-              <Text style={styles.nextButtonText}>Commencer la leçon</Text>
-            </TouchableOpacity>
-          </View>
-        );
+    if (step.type === "vocabulary") {
+      return (
+        <View style={styles.vocabContainer}>
+          <Text style={styles.stepTitle}>{step.title}</Text>
+          {step.content.map((word, i) => (
+            <View key={i} style={styles.vocabCard}>
+              <View style={styles.vocabContent}>
+                <Text style={styles.malagasyWord}>{word.malagasy}</Text>
+                <Text style={styles.frenchWord}>{word.french}</Text>
+                {word.pronunciation && (
+                  <Text style={styles.pronunciation}>{word.pronunciation}</Text>
+                )}
+              </View>
+              <Ionicons name="volume-high" size={24} color="#4CAF50" />
+            </View>
+          ))}
+        </View>
+      );
+    }
 
-      case 'vocabulary':
-        return (
-          <View style={styles.stepContainer}>
-            <Text style={[styles.stepTitle, { color: titleColor }]}>{step.title}</Text>
-            <ScrollView style={styles.vocabularyList}>
-              {step.content.map((word, index) => (
-                <View key={index} style={styles.vocabularyItem}>
-                  <View style={styles.wordContainer}>
-                    <Text style={styles.malagasyWord}>{word.malagasy}</Text>
-                    <Text style={styles.frenchWord}>{word.french}</Text>
-                    <Text style={styles.pronunciation}>{word.pronunciation}</Text>
-                  </View>
-                  <TouchableOpacity style={styles.audioButton}>
-                    <Ionicons name="volume-high" size={24} color="#6CA94F" />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </ScrollView>
-            <TouchableOpacity style={styles.nextButton} onPress={nextStep}>
-              <Text style={styles.nextButtonText}>Continuer</Text>
-            </TouchableOpacity>
-          </View>
-        );
+    if (step.type === "quiz") {
+      const question = step.questions[currentQuestion];
+      const selectedAnswer = selectedAnswers.find(a => a.questionIndex === currentQuestion);
+      const totalQuestions = step.questions.length;
+      const currentQuestionNum = currentQuestion + 1;
 
-      case 'quiz': {
-        const question = step.questions[quizIndex];
-        return (
-          <View style={styles.stepContainer}>
-            <Text style={[styles.stepTitle, { color: titleColor }]}>{step.title}</Text>
-            <Text style={styles.quizProgress}>
-              Question {quizIndex + 1} sur {step.questions.length}
-            </Text>
-            <Text style={[styles.questionText, { color: sectionLabelColor }]}>{question.question}</Text>
-            {question.options.map((option, oIndex) => (
-              <TouchableOpacity
-                key={oIndex}
+      return (
+        <View style={styles.quizContainer}>
+          <Text style={styles.quizTitle}>Testez vos connaissances</Text>
+          <Text style={styles.questionCounter}>Question {currentQuestionNum} sur {totalQuestions}</Text>
+          <Text style={styles.questionText}>{question.question}</Text>
+          
+          {question.options.map((opt, j) => {
+            const isSelected = selectedAnswer && selectedAnswer.answerIndex === j;
+            const isCorrect = j === question.correct;
+            
+            return (
+                <TouchableOpacity
+                  key={j}
                 style={[
                   styles.optionButton,
-                  quizAnswered && oIndex === question.correct ? { backgroundColor: '#4CAF50', borderColor: '#4CAF50' } : null,
-                  quizAnswered && oIndex !== question.correct && oIndex === question.selected ? { backgroundColor: '#F44336', borderColor: '#F44336' } : null
+                  isSelected && isCorrect && styles.correctOption,
+                  isSelected && !isCorrect && styles.incorrectOption,
+                  showQuizResult && j === question.correct && styles.correctOption,
                 ]}
-                onPress={() => handleQuizAnswer(oIndex)}
-                disabled={quizAnswered}
+                onPress={() => handleAnswer(j)}
+                disabled={showQuizResult || hasAnswered}
               >
-                <Text style={styles.optionText}>{option}</Text>
-              </TouchableOpacity>
-            ))}
-            {quizAnswered && (
-              <Text style={lastAnswerCorrect ? [styles.correctText, { color: '#4CAF50' }] : [styles.incorrectText, { color: '#F44336' }] }>
-                {lastAnswerCorrect ? 'Bonne réponse !' : `Mauvaise réponse. La bonne réponse était : ${question.options[question.correct]}`}
-              </Text>
-            )}
-            <TouchableOpacity style={styles.nextButton} onPress={nextStep} disabled={!quizAnswered}>
-              <Text style={styles.nextButtonText}>{quizIndex === step.questions.length - 1 ? 'Voir les résultats' : 'Question suivante'}</Text>
-            </TouchableOpacity>
-            <Text style={styles.scoreLive}>Score actuel : {score} / {step.questions.length}</Text>
-          </View>
-        );
-      }
-
-      case 'practice':
-        return (
-          <View style={styles.stepContainer}>
-            <Text style={[styles.stepTitle, { color: titleColor }]}>{step.title}</Text>
-            <Text style={[styles.stepContent, { color: sectionLabelColor }]}>{step.content}</Text>
-            <TouchableOpacity style={styles.audioButton}>
-              <Ionicons name="play-circle" size={60} color="#6CA94F" />
-            </TouchableOpacity>
-            <Text style={styles.audioHint}>{step.audioHint}</Text>
-            <TouchableOpacity style={styles.nextButton} onPress={nextStep}>
-              <Text style={styles.nextButtonText}>Terminer la leçon</Text>
-            </TouchableOpacity>
-          </View>
-        );
-
-      default:
-        return null;
+                <Text style={styles.optionText}>{opt}</Text>
+                </TouchableOpacity>
+            );
+          })}
+          
+          {showQuizResult && (
+            <Text style={styles.feedbackText}>
+              {selectedAnswer?.isCorrect ? "Bonne réponse !" : "Mauvaise réponse"}
+            </Text>
+          )}
+          
+          {showQuizResult && (
+            <Text style={styles.currentScore}>
+              Score actuel : {selectedAnswers.filter(a => a.isCorrect).length}/{currentQuestionNum}
+            </Text>
+          )}
+            </View>
+      );
     }
+
+    if (step.type === "practice") {
+      return (
+        <View style={styles.practiceContainer}>
+          <Text style={styles.stepTitle}>{step.title}</Text>
+          <Text style={styles.practiceContent}>{step.content}</Text>
+          {step.audioHint && (
+            <Text style={styles.audioHint}>{step.audioHint}</Text>
+          )}
+        </View>
+      );
+    }
+
+    return null;
   };
 
-  // Rendu des résultats finaux
-  const renderResults = () => (
-    <View style={styles.resultsContainer}>
-      <Text style={[styles.resultsTitle, { color: titleColor }]}>Félicitations ! 🎉</Text>
-      <Text style={[styles.resultsSubtitle, { color: sectionLabelColor }]}>Vous avez terminé la leçon</Text>
-      <View style={styles.scoreContainer}>
-        <Text style={styles.scoreText}>Score : {score}/{lessonData.steps[2].questions.length}</Text>
-        <Text style={styles.scorePercentage}>
-          {Math.round((score / lessonData.steps[2].questions.length) * 100)}%
-        </Text>
-      </View>
-      <View style={styles.resultsButtons}>
-        <TouchableOpacity style={styles.restartButton} onPress={restartLesson}>
-          <Text style={styles.restartButtonText}>Recommencer</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => navigation.navigate('lecon')}
-        >
-          <Text style={styles.backButtonText}>Retour aux leçons</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
   return (
-    <View style={[styles.container, { backgroundColor: bgColor }]}>
+    <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color={titleColor} />
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <View style={styles.headerInfo}>
-          <Text style={[styles.headerTitle, { color: titleColor }]}>{lessonData.title}</Text>
-          <Text style={[styles.headerSubtitle, { color: sectionLabelColor }]}>{lessonData.subtitle}</Text>
+        <View style={styles.headerContent}>
+          <Text style={styles.lessonTitle}>{lessonData.title}</Text>
+          <Text style={styles.lessonSubtitle}>{lessonData.subtitle}</Text>
         </View>
-        <View style={styles.progressContainer}>
-          <Text style={styles.progressText}>
-            {currentStep + 1}/{lessonData.steps.length}
-          </Text>
-        </View>
+        <Text style={styles.progressText}>{currentStep + 1}/{lessonData.steps.length}</Text>
       </View>
-      {/* Barre de progression */}
-      <View style={styles.progressBar}>
-        <View 
-          style={[
-            styles.progressFill, 
-            { width: `${((currentStep + 1) / lessonData.steps.length) * 100}%` }
-          ]} 
-        />
+
+      {/* Progress Bar */}
+      <View style={styles.progressBarContainer}>
+        <View style={[styles.progressBarFill, { width: `${((currentStep + 1) / lessonData.steps.length) * 100}%` }]} />
       </View>
-      {/* Contenu principal */}
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {showResults ? renderResults() : renderCurrentStep()}
+
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {renderStep()}
       </ScrollView>
-      {/* Navigation fixe */}
-      <BottomNavigation navigation={navigation} currentScreen="lecon" />
+
+      {/* Navigation Button */}
+      {showFinalResults ? (
+        <View style={styles.resultsContainer}>
+          <Text style={styles.resultsTitle}>Leçon terminée !</Text>
+          <Text style={styles.resultsScore}>
+            Score final : {selectedAnswers.filter(a => a.isCorrect).length}/{lessonData.steps.find(s => s.type === "quiz")?.questions.length || 0}
+          </Text>
+          <TouchableOpacity style={styles.finishButton} onPress={handleFinishLesson}>
+            <Text style={styles.finishButtonText}>Retour aux leçons</Text>
+          </TouchableOpacity>
+        </View>
+      ) : isQuizStep && showQuizResult ? (
+        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+          <Text style={styles.nextButtonText}>
+            {currentQuestion === step.questions.length - 1 ? "Voir les résultats" : "Question suivante"}
+          </Text>
+        </TouchableOpacity>
+      ) : !isQuizStep ? (
+        <TouchableOpacity style={styles.continueButton} onPress={handleNext}>
+          <Text style={styles.continueButtonText}>
+            {currentStep === 0 ? "Commencer la leçon" : "Continuer"}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 };
@@ -303,258 +258,250 @@ const LessonDetail = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: "#000",
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 50,
+    paddingTop: 60,
     paddingBottom: 20,
   },
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: '#333',
-    alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
-  headerInfo: {
+  headerContent: {
     flex: 1,
-    marginLeft: 15,
+    marginLeft: 10,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
+  lessonTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#fff",
   },
-  headerSubtitle: {
+  lessonSubtitle: {
     fontSize: 14,
-    color: '#999',
-  },
-  progressContainer: {
-    alignItems: 'center',
+    color: "#ccc",
+    marginTop: 4,
   },
   progressText: {
-    fontSize: 14,
-    color: '#6CA94F',
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#4CAF50",
   },
-  progressBar: {
+  progressBarContainer: {
     height: 4,
-    backgroundColor: '#333',
+    backgroundColor: "#2A2A2A",
     marginHorizontal: 20,
     marginBottom: 20,
     borderRadius: 2,
   },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#6CA94F',
+  progressBarFill: {
+    height: "100%",
+    backgroundColor: "#4CAF50",
     borderRadius: 2,
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  introContainer: {
+    alignItems: "center",
     paddingHorizontal: 20,
+    paddingTop: 20,
   },
-  stepContainer: {
-    flex: 1,
-    paddingVertical: 20,
-  },
-  stepImage: {
-    width: '100%',
+  lemurImage: {
+    width: 200,
     height: 200,
-    borderRadius: 12,
-    marginBottom: 20,
-    resizeMode: 'cover',
-  },
-  stepTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  stepContent: {
-    fontSize: 16,
-    color: '#ccc',
-    lineHeight: 24,
-    textAlign: 'center',
     marginBottom: 30,
   },
-  vocabularyList: {
+  introTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fff",
+    textAlign: "center",
+    marginBottom: 15,
+  },
+  introContent: {
+    fontSize: 16,
+    color: "#ccc",
+    textAlign: "center",
+    lineHeight: 24,
+  },
+  vocabContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  stepTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#fff",
     marginBottom: 20,
   },
-  vocabularyItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1a1a1a',
+  vocabCard: {
+    backgroundColor: "#1A1A1A",
     borderRadius: 12,
-    padding: 15,
-    marginBottom: 10,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  wordContainer: {
+  vocabContent: {
     flex: 1,
   },
   malagasyWord: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#6CA94F',
-    marginBottom: 5,
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#4CAF50",
+    marginBottom: 4,
   },
   frenchWord: {
     fontSize: 16,
-    color: '#fff',
-    marginBottom: 3,
+    color: "#fff",
+    marginBottom: 4,
   },
   pronunciation: {
     fontSize: 14,
-    color: '#999',
-    fontStyle: 'italic',
-  },
-  audioButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#2a2a2a',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quizProgress: {
-    fontSize: 16,
-    color: '#6CA94F',
-    textAlign: 'center',
-    marginBottom: 20,
+    color: "#888",
+    fontStyle: "italic",
   },
   quizContainer: {
-    marginBottom: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
-  questionContainer: {
+  quizTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#fff",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  questionCounter: {
+    fontSize: 16,
+    color: "#4CAF50",
+    textAlign: "center",
     marginBottom: 20,
   },
   questionText: {
     fontSize: 18,
-    color: '#fff',
-    marginBottom: 15,
-    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 20,
+    textAlign: "center",
   },
   optionButton: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: "#1A1A1A",
     borderRadius: 12,
-    padding: 15,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#333',
+    padding: 16,
+    marginBottom: 12,
+  },
+  correctOption: {
+    backgroundColor: "#4CAF50",
+  },
+  incorrectOption: {
+    backgroundColor: "#D32F2F",
   },
   optionText: {
     fontSize: 16,
-    color: '#fff',
-    textAlign: 'center',
+    color: "#fff",
+    textAlign: "center",
+  },
+  feedbackText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#4CAF50",
+    textAlign: "center",
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  currentScore: {
+    fontSize: 14,
+    color: "#fff",
+    textAlign: "center",
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  practiceContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  practiceContent: {
+    fontSize: 16,
+    color: "#fff",
+    lineHeight: 24,
+    marginBottom: 10,
   },
   audioHint: {
     fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
+    color: "#888",
     marginTop: 10,
   },
-  nextButton: {
-    backgroundColor: '#6CA94F',
+  continueButton: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 16,
     borderRadius: 12,
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    alignItems: 'center',
-    marginTop: 20,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    alignItems: "center",
+  },
+  continueButtonText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  nextButton: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    alignItems: "center",
   },
   nextButtonText: {
     fontSize: 18,
-    color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: "bold",
+    color: "#fff",
   },
   resultsContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 40,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    alignItems: "center",
   },
   resultsTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#6CA94F',
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fff",
     marginBottom: 10,
   },
-  resultsSubtitle: {
+  resultsScore: {
     fontSize: 18,
-    color: '#ccc',
-    marginBottom: 30,
+    color: "#4CAF50",
+    marginBottom: 20,
   },
-  scoreContainer: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  scoreText: {
-    fontSize: 20,
-    color: '#fff',
-    marginBottom: 10,
-  },
-  scorePercentage: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#6CA94F',
-  },
-  resultsButtons: {
-    flexDirection: 'row',
-    gap: 15,
-  },
-  restartButton: {
-    backgroundColor: '#6CA94F',
+  finishButton: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 16,
     borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    width: "100%",
+    alignItems: "center",
   },
-  restartButtonText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: 'bold',
+  finishButtonText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff",
   },
-  backButton: {
-    backgroundColor: '#333',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  backButtonText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  correctOption: {
-    backgroundColor: '#4CAF50', // Green for correct
-    borderColor: '#4CAF50',
-  },
-  incorrectOption: {
-    backgroundColor: '#F44336', // Red for incorrect
-    borderColor: '#F44336',
-  },
-  correctText: {
-    color: '#4CAF50',
-    fontSize: 16,
-    marginTop: 10,
-    textAlign: 'center',
-  },
-  incorrectText: {
-    color: '#F44336',
-    fontSize: 16,
-    marginTop: 10,
-    textAlign: 'center',
-  },
-  scoreLive: {
-    fontSize: 16,
-    color: '#6CA94F',
-    fontWeight: 'bold',
-    marginTop: 20,
-    textAlign: 'center',
+  errorText: {
+    fontSize: 18,
+    color: "#fff",
   },
 });
 
-export default LessonDetail; 
+export default LessonDetail;
