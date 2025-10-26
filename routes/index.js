@@ -12,6 +12,8 @@ import Decouverte from '../screens/decouverte';
 import Lecon from '../screens/lecon';
 import LessonDetail from '../screens/lessonDetail';
 import Chatbot from '../screens/chatbot';
+import Lieux from '../screens/Lieux';
+import LieuDetail from '../screens/LieuDetail';
 import EditProfile from '../screens/EditProfile';
 import ChangePassword from '../screens/ChangePassword';
 import About from '../screens/About';
@@ -35,6 +37,8 @@ const Stack = createNativeStackNavigator();
           <Stack.Screen name="decouverte" component={Decouverte} options={{headerShown: false}} />
           <Stack.Screen name="lecon" component={Lecon} options={{headerShown: false}} />
           <Stack.Screen name="lessonDetail" component={LessonDetail} options={{headerShown: false}} />
+          <Stack.Screen name="Lieux" component={Lieux} options={{headerShown: false}} />
+          <Stack.Screen name="LieuDetail" component={LieuDetail} options={{headerShown: false}} />
           <Stack.Screen name="chatbot" component={Chatbot} options={{headerShown: false}} />
           <Stack.Screen name="editProfile" component={EditProfile} options={{headerShown: true, title: 'Modifier le profil'}} />
           <Stack.Screen name="changePassword" component={ChangePassword} options={{headerShown: true, title: 'Changer mot de passe'}} />

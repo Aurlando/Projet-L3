@@ -92,9 +92,11 @@ const Decouverte = ({ navigation }) => {
   ];
 
   const handleCategoryPress = (category) => {
-    //if (category.title === 'Culture') {
+    if (category.title === 'Culture') {
       navigation.navigate('culture');
-    //}
+    } else if (category.title === 'Lieux') {
+      navigation.navigate('Lieux');
+    }
     // You can add more navigation for other categories if needed
   };
 
