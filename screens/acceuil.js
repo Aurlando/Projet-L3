@@ -15,11 +15,15 @@ import MenuHamburger from "../components/MenuHamburger"; // Assurez-vous que c'e
 import { useTheme } from "../hooks/useTheme";
 import { signOut } from "firebase/auth";
 import { auth, db } from "./locales/firebase";
-import { getDoc, doc } from "firebase/firestore";
+import { getDoc, doc, onSnapshot } from "firebase/firestore";
 import ProgressGraph from "../components/ProgressGraph";
+import { lessonsData } from "../data/lessons/lessonsData";
+
+// Calculer le nombre total de leçons
+const TOTAL_LESSONS = lessonsData.length;
 
 // Données simulées pour guest
-const GUEST_STATS = { lessonsCompleted: 0, totalLessons: 6, studyTime: 0 };
+const GUEST_STATS = { lessonsCompleted: 0, totalLessons: TOTAL_LESSONS, studyTime: 0 };
 
 const Accueil = ({ navigation }) => {
     const [menuVisible, setMenuVisible] = useState(false);
@@ -28,40 +32,50 @@ const Accueil = ({ navigation }) => {
     const [userEmail, setUserEmail] = useState("");
     const [userStats, setUserStats] = useState(GUEST_STATS);
     const [isGuest, setIsGuest] = useState(true);
-    const [objectif, setObjectif] = useState(6);
+    const [objectif, setObjectif] = useState(TOTAL_LESSONS);
 
     useEffect(() => {
-        const fetchUserData = async () => {
-            const user = auth.currentUser;
-            if (user) {
-                setIsGuest(false);
+        const user = auth.currentUser;
+        if (user) {
+            setIsGuest(false);
+            
+            // Utiliser onSnapshot pour écouter les changements en temps réel
+            const userRef = doc(db, "users", user.uid);
+            const unsubscribe = onSnapshot(userRef, (userDoc) => {
                 try {
-                    const userDoc = await getDoc(doc(db, "users", user.uid));
                     const data = userDoc.exists() ? userDoc.data() : {};
                     setUserName(data.name || user.displayName || "");
                     setUserEmail(data.email || user.email || "");
 
-                    const lessonsCompleted = data.lessonsCompleted ?? 0;
-                    const totalLessons = data.totalLessons ?? 6;
-                    const studyTime = data.studyTime ?? 0;
+                    // Calculer les leçons complétées depuis completedLessons
+                    const completedLessons = data.completedLessons || [];
+                    const lessonsCompleted = completedLessons.length;
+                    
+                    // Utiliser le nombre total de leçons depuis les données ou totalLessons du profil
+                    const totalLessons = data.totalLessons ?? TOTAL_LESSONS;
+                    
+                    // Utiliser totalStudyTime au lieu de studyTime
+                    const studyTime = data.totalStudyTime ?? 0;
+                    
                     setUserStats({ lessonsCompleted, totalLessons, studyTime });
-                    setObjectif(totalLessons > 0 ? totalLessons : 6);
+                    setObjectif(totalLessons > 0 ? totalLessons : TOTAL_LESSONS);
                 } catch (e) {
                     console.error("Erreur récupération données:", e);
                     setUserName(user.displayName || "");
                     setUserEmail(user.email || "");
                     setUserStats(GUEST_STATS);
-                    setObjectif(6);
+                    setObjectif(TOTAL_LESSONS);
                 }
-            } else {
-                setIsGuest(true);
-                setUserName("Guest");
-                setUserEmail("");
-                setUserStats(GUEST_STATS);
-                setObjectif(0);
-            }
-        };
-        fetchUserData();
+            });
+
+            return () => unsubscribe();
+        } else {
+            setIsGuest(true);
+            setUserName("Guest");
+            setUserEmail("");
+            setUserStats(GUEST_STATS);
+            setObjectif(TOTAL_LESSONS);
+        }
     }, []);
 
     useEffect(() => {
@@ -108,9 +122,17 @@ const Accueil = ({ navigation }) => {
         return safeValue(cumulativeProgress);
     });
 
-    const hours = Math.floor(studyTime / 60);
-    const minutes = studyTime % 60;
-    const formattedTime = `${hours}h${minutes}min`;
+    // Formater le temps d'étude de manière lisible
+    let formattedTime = "0min";
+    if (studyTime > 0) {
+        const hours = Math.floor(studyTime / 60);
+        const minutes = studyTime % 60;
+        if (hours > 0) {
+            formattedTime = minutes > 0 ? `${hours}h ${minutes}min` : `${hours}h`;
+        } else {
+            formattedTime = `${minutes}min`;
+        }
+    }
 
     const titleColor = theme === "dark" ? "#fff" : "#222";
     const sectionLabelColor = theme === "dark" ? "#fff" : "#222";

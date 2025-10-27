@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { lessonsData } from "../data/lessons/lessonsData";
@@ -15,6 +15,42 @@ const LessonDetail = ({ navigation, route }) => {
   const [showQuizResult, setShowQuizResult] = useState(false);
   const [showFinalResults, setShowFinalResults] = useState(false);
   const [hasAnswered, setHasAnswered] = useState(false);
+  
+  // Chronomètre pour suivre le temps d'étude
+  const sessionStartTime = useRef(null);
+
+  // Démarrer le chronomètre quand la leçon s'ouvre
+  useEffect(() => {
+    sessionStartTime.current = Date.now();
+    
+    // Cleanup : sauvegarder le temps quand l'utilisateur quitte la leçon
+    return () => {
+      saveStudyTime();
+    };
+  }, []);
+
+  // Fonction pour sauvegarder le temps d'étude
+  const saveStudyTime = async () => {
+    const user = auth.currentUser;
+    if (!user || !sessionStartTime.current) return;
+
+    try {
+      const sessionDuration = Math.floor((Date.now() - sessionStartTime.current) / 1000 / 60); // en minutes
+      if (sessionDuration <= 0) return; // Ne pas sauvegarder si moins d'une minute
+
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists()) {
+        const currentStudyTime = userDoc.data().totalStudyTime || 0;
+        await updateDoc(userRef, {
+          totalStudyTime: currentStudyTime + sessionDuration
+        });
+      }
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde du temps d'étude:", error);
+    }
+  };
 
   if (!lessonData) {
     return (
@@ -106,7 +142,9 @@ const LessonDetail = ({ navigation, route }) => {
     }
   };
 
-  const handleFinishLesson = () => {
+  const handleFinishLesson = async () => {
+    // Sauvegarder le temps avant de quitter
+    await saveStudyTime();
     navigation.navigate("lecon", { completedLessonId: lessonId });
   };
 
@@ -208,7 +246,10 @@ const LessonDetail = ({ navigation, route }) => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity onPress={async () => {
+          await saveStudyTime();
+          navigation.goBack();
+        }} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <View style={styles.headerContent}>

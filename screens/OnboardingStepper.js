@@ -73,8 +73,11 @@ export default function OnboardingStepper() {
             },
             // Initialiser la progression
             lessonsCompleted: 0,
+            completedLessons: [], // Leçons complétées (IDs)
+            unlockedLessons: [1], // Première leçon débloquée par défaut
             totalLessons: totalLessons,
-            studyTime: 0, // en minutes
+            studyTime: 0, // en minutes (ancien champ pour compatibilité)
+            totalStudyTime: 0, // en minutes (nouveau champ)
             startDate: new Date().toISOString()
           }, { merge: true }); // merge = ne pas écraser les autres infos utilisateur
 
