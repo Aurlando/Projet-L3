@@ -15,9 +15,9 @@ export default {
       type: "vocabulary",
       title: "Expressions utiles",
       content: [
-        { malagasy: "Manahoana", french: "Bonjour (formel)" },
-        { malagasy: "Manao ahoana ianao ?", french: "Comment allez-vous ?" },
-        { malagasy: "Tsara be", french: "Très bien" },
+        { malagasy: "Manahoana", french: "Bonjour (formel)", pronunciation: "Ma-na-ho-a-na" },
+        { malagasy: "Manao ahoana ianao ?", french: "Comment allez-vous ?", pronunciation: "Ma-nao a-ho-a-na ia-nao" },
+        { malagasy: "Tsara be", french: "Très bien", pronunciation: "Tsa-ra be" },
       ],
     },
     {

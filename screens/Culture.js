@@ -1,144 +1,167 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, Image } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
+import { culturesData } from '../data/cultures/culturesData';
+import BottomNavigation from '../components/BottomNavigation';
 
-const cultureContent = [
-  { type: 'title', text: "L’art culinaire Malagasy et le repas Malagasy" },
-  { type: 'section', text: 'Introduction' },
-  { type: 'paragraph', text: "La cuisine Malagasy est le reflet de la diversité culturelle et géographique de Madagascar. Elle est influencée par les traditions africaines, asiatiques et européennes, et repose principalement sur des produits locaux comme le riz, les légumes, les tubercules, la viande, le poisson et les épices." },
-  { type: 'section', text: 'Les bases de l’alimentation Malagasy' },
-  { type: 'subtitle', text: '1. Le riz, aliment central' },
-  { type: 'paragraph', text: "Le riz, appelé vary, est l'aliment de base incontournable. Il est consommé à chaque repas, souvent trois fois par jour. Il peut être accompagné de sauces ou de la viande, et est parfois préparé sous forme de bouillie (sosoa)." },
-  { type: 'subtitle', text: '2. Les accompagnements ("laoka")' },
-  { type: 'paragraph', text: "Les laoka sont les plats qui accompagnent le riz. Ils peuvent être composés de :" },
-  { type: 'list', items: [
-    'Viandes : zébu (bœuf), poulet, porc.',
-    'Poissons et crustacés, surtout dans les régions côtières.',
-    'Légumes : brèdes (feuilles comestibles), haricots, tomates, etc.',
-    'Légumineuses : pois du cap, lentilles.',
-    'Fruits à pain ou songe (manioc, patate douce, etc.).'
-  ]},
-  { type: 'section', text: 'Spécialités culinaires Malagasy' },
-  { type: 'dish', name: 'Ravitoto', desc: "Feuilles de manioc pilées, généralement cuites avec de la viande de porc. Très apprécié pour son goût unique." },
-  { type: 'image', src: require('../assets/ravitoto.png'), alt: 'Ravitoto' },
-  { type: 'dish', name: "Hen’omby ritra", desc: "Viande de zébu mijotée dans une sauce réduite, parfois avec des tomates et des oignons." },
-  { type: 'image', src: require('../assets/henombyritra.png'), alt: "Hen'omby ritra" },
-  { type: 'dish', name: 'Akoho sy voanio', desc: "Poulet au lait de coco, typique des régions côtières." },
-  { type: 'image', src: require('../assets/akoho.png'), alt: 'Akoho sy voanio' },
-  { type: 'dish', name: 'Mofo anana et mofo gasy', desc: "Beignets de légumes et galettes sucrées au riz, vendus souvent dans la rue comme en-cas ou au petit déjeuner." },
-  { type: 'section', text: 'Boissons traditionnelles' },
-  { type: 'list', items: [
-    'Ranovola : eau de riz brûlé, boisson populaire au goût fumé.',
-  ]},
-  { type: 'image', src: require('../assets/ranovola.png'), alt: 'Ranovola' },
-  { type: 'list', items: [
-    'Betsa-betsa : boisson alcoolisée artisanale à base de jus de canne fermenté.'
-  ]},
-  { type: 'list', items: [
-    'Rhum arrangé : rhum parfumé avec des fruits, des épices ou des herbes.'
-  ]},
-  { type: 'image', src: require('../assets/rhumarrange.png'), alt: 'Rhum arrangé' },
-  { type: 'section', text: 'Repas typique d’une journée' },
-  { type: 'table', rows: [
-    ['Moment', 'Repas'],
-    ['Matin', 'Mofo gasy, sosoa, café'],
-    ['Midi', 'Vary + laoka (viande/légumes) + ranovola'],
-    ['Soir', 'Riz léger, soupe ou restes du midi']
-  ]},
-  { type: 'section', text: 'Conclusion' },
-  { type: 'paragraph', text: "L’art culinaire Malagasy est simple mais riche en saveurs. Il reflète l’importance des produits locaux, la convivialité et la culture du partage dans la société Malagasy. Découvrir la cuisine Malagasy, c’est aussi explorer l’âme du peuple Malagasy à travers ses plats traditionnels." }
-];
+const { width } = Dimensions.get("window");
+const CARD_WIDTH = width - 40;
 
-const Culture = () => {
-  const { theme } = useTheme();
-  const textColor = theme === 'dark' ? '#fff' : '#222';
-  const sectionColor = theme === 'dark' ? '#6CA94F' : '#4CAF50';
-  const bgColor = theme === 'dark' ? '#000' : '#fff';
+export default function Culture({ navigation }) {
+    const openCulture = (culture) => {
+        navigation.navigate("CultureDetail", { cultureId: culture.id });
+    };
 
-  const renderContent = () =>
-    cultureContent.map((item, idx) => {
-      switch (item.type) {
-        case 'title':
-          return <Text key={idx} style={[styles.title, { color: sectionColor }]}>{item.text}</Text>;
-        case 'section':
-          return <Text key={idx} style={[styles.section, { color: sectionColor }]}>{item.text}</Text>;
-        case 'subtitle':
-          return <Text key={idx} style={[styles.subtitle, { color: textColor }]}>{item.text}</Text>;
-        case 'paragraph':
-          return <Text key={idx} style={[styles.paragraph, { color: textColor }]}>{item.text}</Text>;
-        case 'list':
           return (
-            <View key={idx} style={styles.list}>
-              {item.items.map((li, i) => (
-                <View key={i} style={styles.listItem}>
-                  <Text style={[styles.bullet, { color: sectionColor }]}>•</Text>
-                  <Text style={[styles.listText, { color: textColor }]}>{li}</Text>
+        <View style={styles.container}>
+            {/* Header */}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                    <Ionicons name="arrow-back" size={28} color="#fff" />
+                </TouchableOpacity>
+                <View style={styles.headerTitleContainer}>
+                    <Text style={styles.headerTitle}>Culture</Text>
+                    <Text style={styles.headerSubtitle}>Découvrez les traditions de Madagascar</Text>
                 </View>
-              ))}
+                <View style={styles.backButton} />
             </View>
-          );
-        case 'dish':
-          return (
-            <View key={idx} style={styles.dishBlock}>
-              <Text style={[styles.dishName, { color: sectionColor }]}>{item.name}</Text>
-              <Text style={[styles.dishDesc, { color: textColor }]}>{item.desc}</Text>
-            </View>
-          );
-        case 'image':
-          return (
-            <View key={idx} style={styles.imageBlock}>
-              <Image source={item.src} style={styles.cultureImage} resizeMode="cover" />
-              {item.alt && <Text style={styles.imageCaption}>{item.alt}</Text>}
-            </View>
-          );
-        case 'table':
-          return (
-            <View key={idx} style={styles.table}>
-              {item.rows.map((row, i) => (
-                <View key={i} style={[styles.tableRow, i === 0 && styles.tableHeaderRow]}>
-                  <Text style={[styles.tableCell, i === 0 && styles.tableHeaderCell, { color: textColor }]}>{row[0]}</Text>
-                  <Text style={[styles.tableCell, i === 0 && styles.tableHeaderCell, { color: textColor }]}>{row[1]}</Text>
-                </View>
-              ))}
-            </View>
-          );
-        default:
-          return null;
-      }
-    });
 
-  return (
-    <View style={[styles.container, { backgroundColor: bgColor }]}> 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {renderContent()}
-      </ScrollView>
+            <ScrollView 
+                style={styles.scrollView}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+            >
+                {culturesData.map((culture) => (
+                    <TouchableOpacity
+                        key={culture.id}
+                        style={styles.cultureCard}
+                        onPress={() => openCulture(culture)}
+                    >
+                        {/* Image */}
+                        <Image 
+                            source={culture.preview.image} 
+                            style={styles.cardImage}
+                            resizeMode="cover"
+                        />
+                        
+                        {/* Badge */}
+                        <View style={styles.badgeContainer}>
+                            <View style={styles.badge}>
+                                <Ionicons name="heart" size={14} color="#fff" />
+                                <Text style={styles.badgeText}>{culture.preview.badge}</Text>
+            </View>
+            </View>
+
+                        {/* Content */}
+                        <View style={styles.cardContent}>
+                            <Text style={styles.cardTitle}>{culture.preview.title}</Text>
+                            <Text style={styles.cardTagline}>{culture.preview.tagline}</Text>
+                            <Text style={styles.cardShortInfo}>{culture.preview.shortInfo}</Text>
+                </View>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
+
+            <BottomNavigation navigation={navigation} currentScreen="decouverte" />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: 50, paddingHorizontal: 20 },
-  scrollView: { flex: 1 },
-  scrollContent: { paddingBottom: 40 },
-  title: { fontSize: 26, fontWeight: 'bold', marginBottom: 18, textAlign: 'center' },
-  section: { fontSize: 20, fontWeight: 'bold', marginTop: 24, marginBottom: 8 },
-  subtitle: { fontSize: 16, fontWeight: 'bold', marginTop: 16, marginBottom: 4 },
-  paragraph: { fontSize: 15, lineHeight: 24, marginBottom: 10 },
-  list: { marginBottom: 10, marginLeft: 10 },
-  listItem: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4 },
-  bullet: { fontSize: 18, marginRight: 8, marginTop: -2 },
-  listText: { fontSize: 15, flex: 1 },
-  dishBlock: { marginBottom: 14, marginLeft: 10 },
-  dishName: { fontSize: 16, fontWeight: 'bold', marginBottom: 2 },
-  dishDesc: { fontSize: 15, marginBottom: 2 },
-  imageBlock: { alignItems: 'center', marginVertical: 18 },
-  cultureImage: { width: 220, height: 140, borderRadius: 16, marginBottom: 6, borderWidth: 1, borderColor: '#eee' },
-  imageCaption: { fontSize: 13, color: '#888', fontStyle: 'italic', marginBottom: 2 },
-  table: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, marginVertical: 12, overflow: 'hidden' },
-  tableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#eee' },
-  tableHeaderRow: { backgroundColor: '#f2f2f2' },
-  tableCell: { flex: 1, padding: 8, fontSize: 15 },
-  tableHeaderCell: { fontWeight: 'bold' },
+    container: {
+        flex: 1,
+        backgroundColor: "#000",
+    },
+    header: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 20,
+        paddingTop: 60,
+        paddingBottom: 20,
+    },
+    backButton: {
+        width: 40,
+        height: 40,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    headerTitleContainer: {
+        flex: 1,
+        alignItems: "center",
+    },
+    headerTitle: {
+        fontSize: 24,
+        fontWeight: "bold",
+        color: "#fff",
+    },
+    headerSubtitle: {
+        fontSize: 12,
+        color: "#888",
+        marginTop: 4,
+    },
+    scrollView: {
+        flex: 1,
+    },
+    scrollContent: {
+        paddingHorizontal: 20,
+        paddingBottom: 100,
+    },
+    cultureCard: {
+        backgroundColor: "#1A1A1A",
+        borderRadius: 16,
+        marginBottom: 20,
+        overflow: "hidden",
+        elevation: 4,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+    },
+    cardImage: {
+        width: "100%",
+        height: 200,
+    },
+    badgeContainer: {
+        position: "absolute",
+        top: 12,
+        right: 12,
+    },
+    badge: {
+        backgroundColor: "#F44336",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+    },
+    badgeText: {
+        color: "#fff",
+        fontSize: 12,
+        fontWeight: "600",
+    },
+    cardContent: {
+        padding: 16,
+    },
+    cardTitle: {
+        fontSize: 20,
+        fontWeight: "bold",
+        color: "#fff",
+        marginBottom: 6,
+    },
+    cardTagline: {
+        fontSize: 14,
+        color: "#4CAF50",
+        fontWeight: "600",
+        marginBottom: 8,
+    },
+    cardShortInfo: {
+        fontSize: 14,
+        color: "#888",
+        lineHeight: 20,
+    },
 });
 
-export default Culture; 
+// export default Culture; 

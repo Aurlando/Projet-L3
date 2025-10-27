@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { lessonsData } from "../data/lessons/lessonsData";
 import { auth, db } from "./locales/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import PronunciationButton from "../components/PronunciationButton";
 
 const LessonDetail = ({ navigation, route }) => {
   const { lessonId } = route.params;
@@ -172,7 +173,11 @@ const LessonDetail = ({ navigation, route }) => {
                   <Text style={styles.pronunciation}>{word.pronunciation}</Text>
                 )}
               </View>
-              <Ionicons name="volume-high" size={24} color="#4CAF50" />
+              <PronunciationButton 
+                audioFile={word.audioFile}
+                size={24}
+                color="#4CAF50"
+              />
             </View>
           ))}
         </View>

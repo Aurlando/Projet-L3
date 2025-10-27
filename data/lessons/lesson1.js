@@ -16,10 +16,30 @@ export default {
       type: "vocabulary",
       title: "Salutations de base",
       content: [
-        { malagasy: "Tongasoa", french: "Bonjour / Bienvenue", pronunciation: "Tong-a-so-a" },
-        { malagasy: "Salama", french: "Salut", pronunciation: "Sa-la-ma" },
-        { malagasy: "Veloma", french: "Au revoir", pronunciation: "Ve-lo-ma" },
-        { malagasy: "Misaotra", french: "Merci", pronunciation: "Mi-sao-tra" },
+        { 
+          malagasy: "Tongasoa", 
+          french: "Bonjour / Bienvenue", 
+          pronunciation: "Tong-a-so-a",
+          // audioFile: require("../../assets/vocaux/tongasoa.mp3") // Décommenter quand le fichier audio sera ajouté
+        },
+        { 
+          malagasy: "Salama", 
+          french: "Salut", 
+          pronunciation: "Sa-la-ma",
+          // audioFile: require("../../assets/vocaux/salama.mp3") // Décommenter quand le fichier audio sera ajouté
+        },
+        { 
+          malagasy: "Veloma", 
+          french: "Au revoir", 
+          pronunciation: "Ve-lo-ma",
+          // audioFile: require("../../assets/vocaux/veloma.mp3") // Décommenter quand le fichier audio sera ajouté
+        },
+        { 
+          malagasy: "Misaotra", 
+          french: "Merci", 
+          pronunciation: "Mi-sao-tra",
+          // audioFile: require("../../assets/vocaux/misaotra.mp3") // Décommenter quand le fichier audio sera ajouté
+        },
       ],
     },
     {
@@ -27,7 +47,7 @@ export default {
       type: "quiz",
       title: "Testez vos connaissances",
       questions: [
-        { question: "Comment dit-on 'Bonjour' en malgache ?", options: ["Salama", "Tongasoa", "Veloma", "Misaotra"], correct: 1 },
+        { question: "Comment dit-on 'Bonjour' en malgache ?", options: ["Tongasoa", "Salama", "Veloma", "Misaotra"], correct: 1 },
         { question: "Que signifie 'Veloma' ?", options: ["Bonjour", "Merci", "Au revoir", "Salut"], correct: 2 },
         { question: "Comment dit-on 'Merci' en malgache ?", options: ["Tongasoa", "Salama", "Misaotra", "Veloma"], correct: 2 },
       ],
